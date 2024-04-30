@@ -510,10 +510,10 @@ The wasm files are build from `shout.wasm/src/whisper.wasm.cpp`. If you want to 
 
 ```bash
 # run cmake to build wasm
-npm run wasm-build
+npm run wasm:build
 
 # copy emscripten build files to project
-npm run wasm-copy
+npm run wasm:copy
 ```
 
 ### Tests
@@ -552,6 +552,6 @@ Thank you to the creators and contributors of the following open source librarie
 
 ### Audio Test Files
 
-- `examples/alert.ogg`
+- `examples/albert.ogg`
   <a href="https://commons.wikimedia.org/wiki/File:03_ALBERT_EINSTEIN.ogg">Radio Universidad Nacional de La Plata</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>, via Wikimedia Commons
 - `examples/jfk.wav`: <a href="https://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>, via Wikimedia Commons
