@@ -1,3 +1,5 @@
+[![NPM Version](https://img.shields.io/npm/v/@transcribe/transcriber?style=flat&color=green)](https://www.npmjs.com/package/@transcribe/transcriber)
+
 # Transcribe.js
 
 Transcribe speech to text in the browser. Based on a wasm build of [whisper.cpp](https://github.com/ggerganov/whisper.cpp).

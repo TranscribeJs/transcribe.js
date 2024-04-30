@@ -1,6 +1,13 @@
+[![NPM Version](https://img.shields.io/npm/v/@transcribe/transcriber?style=flat&color=green)](https://www.npmjs.com/package/@transcribe/transcriber)
+
 # Transcribe.js
 
 Transcribe speech to text in the browser. Based on a wasm build of [whisper.cpp](https://github.com/ggerganov/whisper.cpp).
+
+Check out the examples.
+
+- [File Transcriber](https://examples.transcribejs.dev/examples/index.html)
+- [Stream Transcriber (experimental)](https://examples.transcribejs.dev/examples/stream.html)
 
 ## Table of Contents
 
@@ -105,7 +112,7 @@ You can use Transcribe.js without a bundler or package manager. Download the fil
 
 ## Usage
 
-Check out the [Example](https://github.com/transcribejs/examples/index.html).
+Check out the [Example](https://examples.transcribejs.dev/examples/index.html).
 
 ```js
 import { FileTranscriber } from "@transcribe/transcriber";
@@ -224,7 +231,7 @@ transcriber.destroy();
 
 Unfortunatly processing is way too slow for real time applications. But maybe this will work in the future. Also this doesn't work in Firefox unless the stream source has a sample rate of 16kHz.
 
-[Stream Example](https://github.com/transcribejs/examples/stream.html)
+[Stream Example](https://examples.transcribejs.dev/examples/stream.html)
 
 ```js
 import { StreamTranscriber } from "@transcribe/transcriber";
