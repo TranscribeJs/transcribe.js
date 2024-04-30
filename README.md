@@ -41,27 +41,6 @@ Your webserver must serve the files with cross origin headers.
 `"Cross-Origin-Embedder-Policy": "require-corp"`  
 `"Cross-Origin-Opener-Policy": "same-origin"`
 
-If you use **Vite** as a bundler you can add the following to the plugins section of your `vite.config.ts`
-
-```js
-// vite.config.ts
-
-plugins: [
-  ...,
-  // https://vitejs.dev/guide/api-plugin.html#configureserver
-  {
-    name: "configure-response-headers",
-    configureServer: (server) => {
-      server.middlewares.use((_req, res, next) => {
-        res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-        res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-        next();
-      });
-    },
-  },
-  ],
-```
-
 ### Model File
 
 You need a ggml model file to run Transcribe.js. You can download them on hugging face https://huggingface.co/ggerganov/whisper.cpp/tree/main . You should start with the (quantized) tiny or base models. Larger models propably won't work but you can try it, though.
