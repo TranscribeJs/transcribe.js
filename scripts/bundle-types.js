@@ -24,7 +24,8 @@ types.forEach((type) => {
 });
 
 // remove import "types.d.ts" because it's already included
-out = out.replace(/import\(\".\/types\.d\.ts\"\)\./g, "");
+out = out.replaceAll('import("./types.d.ts").', "");
+out = out.replaceAll('import { Transcriber } from "./src/Transcriber.js";', "");
 
 // close module
 out += "}\n";
