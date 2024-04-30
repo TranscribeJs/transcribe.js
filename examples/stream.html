@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StreamTranscriber Example | Transcribe.js</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css"
+    />
+  </head>
+  <body>
+    <script src="model-loader.js"></script>
+
+    <!-- set paths to js files -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@transcribe/shout": "../src/shout/shout.wasm.js",
+          "@transcribe/transcriber": "../src/index.js"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import { StreamTranscriber } from "@transcribe/transcriber";
+
+      // Preload model
+      const path = location.pathname.replace(/\/[^/]+$/, "");
+      const modelFile = `${path}/ggml-tiny-q5_1.bin`;
+
+      preloadModel(
+        modelFile,
+        (msg) => (document.querySelector(".status").innerText = msg)
+      ).then((loaded) => {
+        if (loaded) {
+          document.querySelector(".audio").removeAttribute("disabled");
+          document.querySelector(".start").removeAttribute("disabled");
+          document.querySelector(".stop").removeAttribute("disabled");
+        }
+      });
+
+      // callback for voice activity
+      const onVoiceActivity = (active) => {
+        document.querySelector(".vad").innerText = active ? "🔴" : "";
+      };
+
+      // create a new transcriber instance with callbacks
+      const transcriber = new StreamTranscriber({
+        // model, you can try larger models, but they tend to be too slow for realtime transcription
+        model: "/examples/ggml-tiny-q5_1.bin",
+
+        // on transcribe callback
+        onSegment: (result) => {
+          document.querySelector(".transcript").innerText =
+            result?.segment?.text ?? "";
+        },
+
+        // on status change callback
+        onStreamStatus: (status) => {
+          document.querySelector(".status").innerText = status;
+        },
+      });
+
+      // initialize the transcriber
+      async function init() {
+        try {
+          await transcriber.init();
+        } catch (error) {
+          console.error("Error transcribing", error);
+        }
+      }
+
+      // stream audio from a file
+      let audio;
+      async function streamAudio() {
+        audio?.pause();
+        audio = null;
+
+        await init();
+        // start waiting for audio
+        await transcriber.start({ lang: "en" });
+
+        audio = new Audio("/examples/albert.ogg");
+        await audio.play();
+        const stream = audio.captureStream
+          ? audio.captureStream()
+          : audio.mozCaptureStream();
+
+        transcriber.transcribe(stream, { onVoiceActivity });
+      }
+
+      async function stream() {
+        await init();
+        // start waiting for audio
+        await transcriber.start({ lang: "en" });
+
+        // get the microphone audio stream
+        navigator.mediaDevices
+          .getUserMedia({ audio: true, video: false })
+          .then((stream) => {
+            // transcribe the audio stream
+            transcriber.transcribe(stream, { onVoiceActivity });
+          });
+      }
+
+      // start the audio stream
+      document.querySelector(".audio").addEventListener("click", () => {
+        streamAudio();
+      });
+
+      // start the stream
+      document.querySelector(".start").addEventListener("click", () => {
+        stream();
+      });
+
+      // stop the stream
+      document.querySelector(".stop").addEventListener("click", async () => {
+        await transcriber.stop();
+        audio?.pause();
+      });
+    </script>
+
+    <h1>Transcribe.js - StreamTranscriber (experimental)</h1>
+
+    <p>
+      This is <strong>experimental</strong> and more a proof of concept than a
+      production ready. It doesn't work in firefox because of the sample rate
+      conversion with the audio context. Also shout wasm is
+      <em>way too slow</em> to acutally transcribe in realtime. But apart from
+      that it works better than I've expected.
+    </p>
+
+    <p>
+      <button class="audio">Start Adio Stream</button>
+      <button class="start">Start Microphone Stream</button>
+      <button class="stop">Stop Stream</button>
+    </p>
+
+    <div style="display: flex; gap: 1rem; align-items: center">
+      <div style="min-width: 15rem">
+        <b>Voice Activity:</b>
+        <span class="vad" style="font-size: 0.75em"></span>
+      </div>
+      <div>
+        <b>Status:</b> <code class="status"><em>click start</em></code>
+      </div>
+    </div>
+
+    <pre>
+      <code class="transcript" style="white-space: normal;"></code>
+    </pre>
+  </body>
+</html>

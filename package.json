@@ -1,0 +1,31 @@
+{
+  "name": "root",
+  "description": "monorepo for transcribe.js",
+  "private": true,
+  "engines": {
+    "node": ">=20.2.0"
+  },
+  "scripts": {
+    "wasm:build": "cd ./shout.wasm/em-build && emcmake cmake .. && make -j",
+    "wasm:copy": "cp ./shout.wasm/em-build/bin/shout.wasm.js ./src/shout/ && cp ./shout.wasm/em-build/bin/shout.wasm.worker.mjs ./src/shout/",
+    "copy-fft.js": "node ./scripts/fft.js-add-export.js",
+    "generate-types": "npx -p typescript tsc src/*[^index].js --declaration --allowJs --emitDeclarationOnly --outDir src/types && node ./scripts/bundle-types.js && rm -rf src/types",
+    "pack:transcriber": "node ./scripts/copy-transcriber-files-to-package.mjs",
+    "pack:shout": "node ./scripts/copy-shout-files-to-package.mjs",
+    "build": "npm run copy-fft.js && npm run generate-types && npm run wasm:build && npm run wasm:copy && npm run pack:transcriber && npm run pack:shout",
+    "dev": "node ./dev-server.js",
+    "test:unit": "vitest",
+    "test:e2e": "npx playwright test",
+    "test:e2e-ui": "npx playwright test --ui"
+  },
+  "author": "thurti",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.43.1",
+    "@types/node": "^20.12.7",
+    "fft.js": "^4.0.4",
+    "globby": "^14.0.1",
+    "jsdom": "^24.0.0",
+    "vitest": "^1.5.0"
+  }
+}

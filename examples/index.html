@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FileTranscriber Example | Transcribe.js</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css"
+    />
+  </head>
+  <body>
+    <script src="model-loader.js"></script>
+
+    <!-- set paths to js files -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@transcribe/shout": "../src/shout/shout.wasm.js",
+          "@transcribe/transcriber": "../src/index.js"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import { FileTranscriber } from "@transcribe/transcriber";
+
+      // Preload model
+      const path = location.pathname.replace(/\/[^/]+$/, "");
+      const modelFile = `${path}/ggml-tiny-q5_1.bin`;
+
+      preloadModel(modelFile, printConsole).then((loaded) => {
+        if (loaded) {
+          document.querySelector(".start").removeAttribute("disabled");
+          document.querySelector(".cancel").removeAttribute("disabled");
+          document.querySelector(".preload-model").style.display = "none";
+        }
+      });
+
+      // Console output
+      const consoleOutput = document.querySelector(".console");
+
+      function printConsole(msg) {
+        consoleOutput.innerText += msg + "\n";
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+      }
+
+      // New Transcriber
+      const transcriber = new FileTranscriber({
+        model: modelFile,
+
+        print: printConsole,
+        printErr: printConsole,
+
+        onReady: () => {
+          console.log("Ready to transcribe.");
+        },
+
+        onProgress: (progress) => {
+          console.log("Progress", progress);
+        },
+
+        onCanceled: () => {
+          console.log("Canceled");
+        },
+
+        onComplete: () => {
+          console.log("Transcription complete.");
+        },
+      });
+
+      // transcribe audio file
+      async function transcript() {
+        try {
+          await transcriber.init();
+
+          const result = await transcriber.transcribe("/examples/jfk.wav", {
+            lang: "en",
+          });
+
+          console.log(result);
+
+          document.querySelector(".result").innerText = "";
+
+          result.transcription.forEach((segment) => {
+            document.querySelector(".result").innerText += segment.text + "\n";
+          });
+        } catch (error) {
+          console.error("Error transcribing", error);
+        }
+      }
+
+      // Button events
+      document.querySelector(".start").addEventListener("click", async () => {
+        document.querySelector(".result").innerHTML = "<em>processing...</em>";
+        transcript();
+      });
+
+      document.querySelector(".cancel").addEventListener("click", async () => {
+        transcriber.cancel();
+      });
+
+      document
+        .querySelector(".preload-model")
+        .addEventListener("click", async (e) => {
+          await preloadModel(modelFile, printConsole).then((loaded) => {
+            if (loaded) {
+              document.querySelector(".start").removeAttribute("disabled");
+              document.querySelector(".cancel").removeAttribute("disabled");
+              document.querySelector(".preload-model").style.display = "none";
+            }
+          });
+        });
+    </script>
+    <h1>Transcribe.js - FileTranscriber</h1>
+
+    <h2>Example File</h2>
+    <audio controls src="/examples/jfk.wav"></audio> <br />
+
+    <h2>Transcribe</h2>
+    <p>
+      <button class="start" disabled>Start</button>
+      <button class="cancel" disabled>Cancel</button>
+      <button class="preload-model">Load Model File</button>
+    </p>
+
+    <p>
+      Click transcribe and wait for the transcription to complete. Check the
+      developer console for complete json result.
+    </p>
+
+    <pre>
+      <code class="result" style="white-space: normal;"><em>Click Start to transcribe test audio file.</em></code>
+    </pre>
+
+    <h3>Console Output</h3>
+    <pre
+      class="console"
+      style="border: 1px solid gray; height: 300px; overflow: scroll"
+    ></pre>
+  </body>
+</html>

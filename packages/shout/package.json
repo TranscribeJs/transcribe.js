@@ -1,0 +1,46 @@
+{
+  "name": "@transcribe/shout",
+  "version": "0.1.0",
+  "description": "Wasm build based on whisper.cpp.",
+  "type": "module",
+  "browser": "./index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/transcribejs/transcribe.js"
+  },
+  "files": [
+    "./src/**/*"
+  ],
+  "keywords": [
+    "transcribejs",
+    "transcribe.js",
+    "shout",
+    "speech",
+    "transcribe",
+    "transcript",
+    "speech to text",
+    "wasm",
+    "AI LOL",
+    "🤫"
+  ],
+  "author": "thurti",
+  "license": "MIT",
+  "homepage": "https://transcribejs.dev",
+  "funding": [
+    {
+      "type": "Github",
+      "url": "https://github.com/sponsors/thurti"
+    },
+    {
+      "type": "Ko-fi",
+      "url": "https://ko-fi.com/thurti"
+    },
+    {
+      "type": "Buy Me A Coffee",
+      "url": "https://buymeacoffee.com/thurti"
+    }
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

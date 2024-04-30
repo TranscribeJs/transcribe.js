@@ -1,0 +1,51 @@
+{
+  "name": "@transcribe/transcriber",
+  "version": "0.1.0",
+  "description": "Transcribe speech to text in the browser.",
+  "type": "module",
+  "browser": "./src/index.js",
+  "types": "./index.d.ts",
+  "peerDependencies": {
+    "@transcribe/shout": "~0.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/transcribejs/transcribe.js"
+  },
+  "files": [
+    "./src/*",
+    "./index.d.ts"
+  ],
+  "keywords": [
+    "transcribejs",
+    "transcribe.js",
+    "shout",
+    "speech",
+    "transcribe",
+    "transcript",
+    "speech to text",
+    "wasm",
+    "AI LOL",
+    "🤫"
+  ],
+  "author": "thurti",
+  "license": "MIT",
+  "homepage": "https://transcribejs.dev",
+  "funding": [
+    {
+      "type": "Github",
+      "url": "https://github.com/sponsors/thurti"
+    },
+    {
+      "type": "Ko-fi",
+      "url": "https://ko-fi.com/thurti"
+    },
+    {
+      "type": "Buy Me A Coffee",
+      "url": "https://buymeacoffee.com/thurti"
+    }
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
