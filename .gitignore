@@ -9,3 +9,4 @@ node_modules/
 /packages/transcriber/src/**/*
 /packages/shout/src/**/*
 !.gitkeep
+deploy-example-files.sh
