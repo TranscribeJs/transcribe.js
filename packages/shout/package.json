@@ -1,6 +1,6 @@
 {
   "name": "@transcribe/shout",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "Wasm build based on whisper.cpp.",
   "type": "module",
   "browser": "./index.js",
@@ -8,9 +8,6 @@
     "type": "git",
     "url": "https://github.com/transcribejs/transcribe.js"
   },
-  "files": [
-    "./src/**/*"
-  ],
   "keywords": [
     "transcribejs",
     "transcribe.js",

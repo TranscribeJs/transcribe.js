@@ -30,7 +30,6 @@ if (fs.existsSync(destinationPath)) {
 
 // create .gitignore
 fs.mkdirSync(destinationPath);
-fs.writeFileSync(destinationPath + "/.gitignore", "/**/*\n!.gitignore");
 
 // copy files
 copyFiles(["src/shout"], destinationPath + "/shout");

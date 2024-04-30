@@ -1,6 +1,6 @@
 {
   "name": "@transcribe/transcriber",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Transcribe speech to text in the browser.",
   "type": "module",
   "browser": "./src/index.js",
@@ -12,10 +12,6 @@
     "type": "git",
     "url": "https://github.com/transcribejs/transcribe.js"
   },
-  "files": [
-    "./src/*",
-    "./index.d.ts"
-  ],
   "keywords": [
     "transcribejs",
     "transcribe.js",
