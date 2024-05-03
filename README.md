@@ -76,7 +76,7 @@ You can use Transcribe.js without a bundler or package manager. Download the fil
 
 ## Usage
 
-For full code example and advanced usage please check out https://www.transcribejs.dev or check out the [File Transcriber Example](https://examples.transcribejs.dev/examples/index.html).
+For full code examples and advanced usage please see https://www.transcribejs.dev or check out the [File Transcriber Example](https://examples.transcribejs.dev/examples/index.html).
 
 ```js
 import { FileTranscriber } from "@transcribe/transcriber";
