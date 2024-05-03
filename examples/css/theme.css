@@ -1,0 +1,57 @@
+@font-face {
+  font-family: "Spartan";
+  src: url("PT_Root_UI_VF.woff2") format("woff2");
+  font-display: swap;
+  font-weight: 1 1000;
+  font-stretch: 75% 100%;
+}
+
+:root {
+  --theme-color: #aa69af;
+  --theme-color-dark: #97599b;
+
+  --background-body: #3f3f3f;
+  --button-base: var(--theme-color);
+  --button-hover: var(--theme-color-dark);
+  --links: var(--theme-color);
+  --text-main: #c8c8c8;
+  --text-bright: #c8c8c8;
+  --code: #f7c2d6d6;
+}
+
+body {
+  font-family: "Spartan", "Source Sans Pro", Helvetica Neue, Arial, sans-serif;
+  font-size: 18px;
+  line-height: 1.5;
+  font-weight: 500;
+  word-spacing: 0.8px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+pre {
+  margin: 0;
+}
+
+code,
+pre {
+  font-size: 0.75rem;
+}
+
+ul,
+ul a,
+p {
+  hyphens: auto;
+  text-wrap: pretty;
+  max-width: 70ch;
+}
+
+h1,
+h2 {
+  text-wrap: balance;
+  line-height: 1.2;
+}
+
+.flow > * + * {
+  margin-top: 1.5rem;
+}

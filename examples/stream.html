@@ -8,6 +8,7 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css"
     />
+    <link rel="stylesheet" href="css/theme.css" />
   </head>
   <body>
     <script src="model-loader.js"></script>
@@ -121,40 +122,38 @@
       });
     </script>
 
-    <h1>Transcribe.js - StreamTranscriber (experimental)</h1>
-
-    <p>
-      <a href="https://transcribejs.dev">Transcribe.js</a> <br />
-      <a href="https://github.com/transcribejs/transcribe.js">Code on Github</a>
-    </p>
-
-    <p>
-      This is <strong>experimental</strong> and more a proof of concept than a
-      production ready. It doesn't work in firefox because of the sample rate
-      conversion with the audio context. Also shout wasm is
-      <strike>way too slow</strike>
-      <em>depends on your machine and the model size</em> to acutally transcribe
-      in realtime. But apart from that it works better than I've expected.
-    </p>
-
-    <p>
-      <button class="audio">Start Adio Stream</button>
-      <button class="start">Start Microphone Stream</button>
-      <button class="stop">Stop Stream</button>
-    </p>
-
-    <div style="display: flex; gap: 1rem; align-items: center">
-      <div style="min-width: 15rem">
-        <b>Voice Activity:</b>
-        <span class="vad" style="font-size: 0.75em"></span>
+    <main class="flow">
+      <h1>Transcribe.js - StreamTranscriber (experimental)</h1>
+      <p>
+        <a href="https://transcribejs.dev">Transcribe.js</a> <br />
+        <a href="https://github.com/transcribejs/transcribe.js"
+          >Code on Github</a
+        >
+      </p>
+      <p>
+        This is <strong>experimental</strong> and more a proof of concept than a
+        production ready. It doesn't work in firefox because of the sample rate
+        conversion with the audio context. Also shout wasm is
+        <strike>way too slow</strike>
+        <em>depends on your machine and the model size</em> to acutally
+        transcribe in realtime. But apart from that it works better than I've
+        expected.
+      </p>
+      <p>
+        <button class="audio">Start Adio Stream</button>
+        <button class="start">Start Microphone Stream</button>
+        <button class="stop">Stop Stream</button>
+      </p>
+      <div style="display: flex; column-gap: 1rem; align-items: center">
+        <div style="min-width: 15rem">
+          <b>Voice Activity:</b>
+          <span class="vad" style="font-size: 0.75em"></span>
+        </div>
+        <div>
+          <b>Status:</b> <code class="status"><em>click start</em></code>
+        </div>
       </div>
-      <div>
-        <b>Status:</b> <code class="status"><em>click start</em></code>
-      </div>
-    </div>
-
-    <pre>
-      <code class="transcript" style="white-space: normal;"></code>
-    </pre>
+      <pre><code class="transcript" style="white-space: normal;"></code></pre>
+    </main>
   </body>
 </html>

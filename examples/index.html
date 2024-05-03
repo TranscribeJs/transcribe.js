@@ -8,6 +8,7 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css"
     />
+    <link rel="stylesheet" href="css/theme.css" />
   </head>
   <body>
     <script src="model-loader.js"></script>
@@ -112,36 +113,32 @@
           });
         });
     </script>
-    <h1>Transcribe.js - FileTranscriber</h1>
-
-    <p>
-      <a href="https://transcribejs.dev">Transcribe.js</a> <br />
-      <a href="https://github.com/transcribejs/transcribe.js">Code on Github</a>
-    </p>
-
-    <h2>Example File</h2>
-    <audio controls src="/examples/jfk.wav"></audio> <br />
-
-    <h2>Transcribe</h2>
-    <p>
-      <button class="start" disabled>Start</button>
-      <button class="cancel" disabled>Cancel</button>
-      <button class="preload-model">Load Model File</button>
-    </p>
-
-    <p>
-      Click transcribe and wait for the transcription to complete. Check the
-      developer console for complete json result.
-    </p>
-
-    <pre>
-      <code class="result" style="white-space: normal;"><em>Click Start to transcribe test audio file.</em></code>
-    </pre>
-
-    <h3>Console Output</h3>
-    <pre
-      class="console"
-      style="border: 1px solid gray; height: 300px; overflow: scroll"
-    ></pre>
+    <div class="flow">
+      <h1>Transcribe.js - FileTranscriber</h1>
+      <p>
+        <a href="https://transcribejs.dev">Transcribe.js</a> <br />
+        <a href="https://github.com/transcribejs/transcribe.js"
+          >Code on Github</a
+        >
+      </p>
+      <h2>Example File</h2>
+      <audio controls src="/examples/jfk.wav"></audio> <br />
+      <h2>Transcribe</h2>
+      <p>
+        <button class="start" disabled>Start</button>
+        <button class="cancel" disabled>Cancel</button>
+        <button class="preload-model">Load Model File</button>
+      </p>
+      <p>
+        Click transcribe and wait for the transcription to complete. Check the
+        developer console for complete json result.
+      </p>
+      <pre><code class="result" style="white-space: normal;"><em>Click Start to transcribe test audio file.</em></code></pre>
+      <h3>Console Output</h3>
+      <pre
+        class="console"
+        style="border: 1px solid gray; height: 300px; overflow: scroll"
+      ></pre>
+    </div>
   </body>
 </html>
