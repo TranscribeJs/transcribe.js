@@ -63,14 +63,14 @@ export class FileTranscriber extends Transcriber {
   constructor(options) {
     super(options);
 
-    this._onReady = options.onReady ?? (() => {});
-    this._onComplete = options.onComplete ?? (() => {});
-    this._onCanceled = options.onCanceled ?? (() => {});
     this._dtwType = options.dtwType ?? "";
+    this._onReady = options.onReady ?? (() => {});
 
-    // worker commands called from wasm
-    this.Module.onProgress = options.onProgress ?? (() => {});
-    this.Module.onNewSegment = options.onSegment ?? (() => {});
+    this.onComplete = options.onComplete;
+    this.onCanceled = options.onCanceled;
+    this.onProgress = options.onProgress;
+    this.onSegment = options.onSegment;
+
     this.Module.onTranscribed = this._onTranscribed.bind(this);
     this.Module.onCanceled = this._onCancel.bind(this);
   }
@@ -82,6 +82,42 @@ export class FileTranscriber extends Transcriber {
    */
   get dtwType() {
     return this._dtwType;
+  }
+
+  /**
+   * Called when transcription is complete.
+   *
+   * @type {import("./types.d.ts").FileTranscriberOptions.onComplete}
+   */
+  set onComplete(callback = () => {}) {
+    this._onComplete = callback;
+  }
+
+  /**
+   * Called when transcription is canceled.
+   *
+   * @type {import("./types.d.ts").FileTranscriberOptions.onCanceled}
+   */
+  set onCanceled(callback = () => {}) {
+    this._onCanceled = callback;
+  }
+
+  /**
+   * Called on transcriber progress.
+   *
+   * @type {import("./types.d.ts").FileTranscriberOptions.onProgress}
+   */
+  set onProgress(callback = () => {}) {
+    this.Module.onProgress = callback;
+  }
+
+  /**
+   * Called when a new transcribed segment is ready.
+   *
+   * @type {import("./types.d.ts").FileTranscriberOptions.onSegment}
+   */
+  set onSegment(callback = () => {}) {
+    this.Module.onNewSegment = callback;
   }
 
   /**

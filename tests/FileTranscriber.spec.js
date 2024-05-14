@@ -44,6 +44,31 @@ describe("FileTranscriber", () => {
     });
   });
 
+  describe("callback setter", () => {
+    const transcriber = new FileTranscriber({ model });
+    const myNewCallback = vi.fn();
+
+    it("should set onProgress callback", () => {
+      transcriber.onProgress = myNewCallback;
+      expect(transcriber.Module.onProgress).toBe(myNewCallback);
+    });
+
+    it("should set onSegment callback", () => {
+      transcriber.onSegment = myNewCallback;
+      expect(transcriber.Module.onNewSegment).toBe(myNewCallback);
+    });
+
+    it("should set onComplete callback", () => {
+      transcriber.onComplete = myNewCallback;
+      expect(transcriber._onComplete).toBe(myNewCallback);
+    });
+
+    it("should set onCanceled callback", () => {
+      transcriber.onCanceled = myNewCallback;
+      expect(transcriber._onCanceled).toBe(myNewCallback);
+    });
+  });
+
   describe("init", () => {
     it("should initialize the transcriber module and call the onReady callback", async () => {
       // Arrange
