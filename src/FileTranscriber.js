@@ -106,7 +106,7 @@ export class FileTranscriber extends Transcriber {
    * @param {number} [options.max_len=0] Maximum segment length in characters.
    * @param {boolean} [options.split_on_word=false] Split the text on word.
    * @param {boolean} [options.suppress_non_speech=false] Suppress non-speech.
-   * @returns {Promise<import("./types.d.ts").TranscripeResult>}
+   * @returns {Promise<import("./types.d.ts").TranscribeResult>}
    */
   async transcribe(
     audio,

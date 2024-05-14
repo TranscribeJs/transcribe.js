@@ -75,7 +75,7 @@ export type TranscribeResultSegement = {
   segment: TranscribeSegment;
 };
 
-export type TranscripeResult = {
+export type TranscribeResult = {
   result: {
     /** Language code used by transcriber. */
     language: string;
@@ -158,9 +158,9 @@ export type FileTranscriberOptions = TranscriberOptions & {
   /**
    * Called when transcription is complete.
    *
-   * @param {TranscripeResult} result
+   * @param {TranscribeResult} result
    */
-  onComplete?: (result: TranscripeResult) => void;
+  onComplete?: (result: TranscribeResult) => void;
 };
 
 export type StreamTranscriberOptions = TranscriberOptions & {
