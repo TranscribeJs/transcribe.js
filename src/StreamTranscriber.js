@@ -302,4 +302,11 @@ export class StreamTranscriber extends Transcriber {
       console.log(error);
     }
   }
+
+  destroy() {
+    super.destroy();
+    this._streamAudioContext?.close();
+    this._onReady = null;
+    this._isReady = false;
+  }
 }

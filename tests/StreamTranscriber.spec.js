@@ -264,4 +264,32 @@ describe("StreamTranscriber", () => {
       expect(console.log).toHaveBeenCalledWith("Stream not active.");
     });
   });
+
+  describe("destroy", () => {
+    it("should destroy the transcriber and clean up callbacks", () => {
+      // Arrange
+      const transcriber = new StreamTranscriber({
+        model,
+        onReady: vi.fn(),
+        onSegment: vi.fn(),
+        onStreamStatus: vi.fn(),
+      });
+
+      transcriber._isRuntimeInitialized = true;
+      transcriber._freeWasmModule = vi.fn();
+      transcriber._streamAudioContext = {
+        close: vi.fn(),
+      };
+
+      // Act
+      transcriber.destroy();
+
+      // Assert
+      expect(transcriber._onReady).toBeNull();
+      expect(transcriber._freeWasmModule).toBeCalled();
+      expect(transcriber.Module).toBeNull();
+      expect(transcriber._streamAudioContext.close).toBeCalled();
+      expect(transcriber.isReady).toBe(false);
+    });
+  });
 });
