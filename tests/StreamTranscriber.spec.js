@@ -34,6 +34,21 @@ describe("StreamTranscriber", () => {
     });
   });
 
+  describe("callback setter", () => {
+    const transcriber = new StreamTranscriber({ model });
+    const myNewCallback = vi.fn();
+
+    it("should set onSegment callback", () => {
+      transcriber.onSegment = myNewCallback;
+      expect(transcriber.Module.onStreamTranscription).toBe(myNewCallback);
+    });
+
+    it("should set onStreamStatus callback", () => {
+      transcriber.onStreamStatus = myNewCallback;
+      expect(transcriber.Module.onStreamStatus).toBe(myNewCallback);
+    });
+  });
+
   describe("getAudioWorkletPath", () => {
     it("should return the audio worklet path if set in options", () => {
       // Arrange

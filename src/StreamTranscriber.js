@@ -59,8 +59,8 @@ export class StreamTranscriber extends Transcriber {
       options.audioWorkletsPath?.trim().replace(/\/$/, "") ?? "";
 
     // worker commands called from wasm
-    this.Module.onStreamTranscription = options.onSegment ?? console.log;
-    this.Module.onStreamStatus = options.onStreamStatus ?? (() => {});
+    this.onSegment = options.onSegment;
+    this.onStreamStatus = options.onStreamStatus;
   }
 
   /**
@@ -70,6 +70,24 @@ export class StreamTranscriber extends Transcriber {
    */
   get isStreamRunning() {
     return this._isStreamRunning;
+  }
+
+  /**
+   * Called when a new transcription from stream is ready.
+   *
+   * @type {import("./types.d.ts").StreamTranscriberOptions.onSegment}
+   */
+  set onSegment(callback = () => {}) {
+    this.Module.onStreamTranscription = callback;
+  }
+
+  /**
+   * Called when stream status changes.
+   *
+   * @type {import("./types.d.ts").StreamTranscriberOptions.onStreamStatus}
+   */
+  set onStreamStatus(callback = () => {}) {
+    this.Module.onStreamStatus = callback;
   }
 
   /**
