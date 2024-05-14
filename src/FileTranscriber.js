@@ -201,6 +201,19 @@ export class FileTranscriber extends Transcriber {
   }
 
   /**
+   * Free wasm module and clean up callbacks.
+   */
+  destroy() {
+    super.destroy();
+    this._onReady = null;
+    this._onComplete = null;
+    this._onCanceled = null;
+    this._resolveCancel = null;
+    this._resolveComplete = null;
+    this._isReady = false;
+  }
+
+  /**
    * Just for resolving the cancel promise.
    *
    * @private

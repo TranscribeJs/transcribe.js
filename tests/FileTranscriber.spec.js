@@ -189,4 +189,33 @@ describe("FileTranscriber", () => {
       await expect(resultPromise).resolves.toBeUndefined();
     });
   });
+
+  describe("destroy", () => {
+    it("should destroy the transcriber and clean up callbacks", () => {
+      // Arrange
+      const transcriber = new FileTranscriber({
+        model,
+        onReady: vi.fn(),
+        onComplete: vi.fn(),
+        onCanceled: vi.fn(),
+        onProgress: vi.fn(),
+        onSegment: vi.fn(),
+      });
+
+      transcriber._isRuntimeInitialized = true;
+      transcriber._freeWasmModule = vi.fn();
+      // Act
+      transcriber.destroy();
+
+      // Assert
+      expect(transcriber.Module).toBeNull();
+      expect(transcriber._onReady).toBeNull();
+      expect(transcriber._onComplete).toBeNull();
+      expect(transcriber._onCanceled).toBeNull();
+      expect(transcriber._resolveCancel).toBeNull();
+      expect(transcriber._resolveComplete).toBeNull();
+      expect(transcriber._freeWasmModule).toBeCalled();
+      expect(transcriber._isReady).toBe(false);
+    });
+  });
 });
