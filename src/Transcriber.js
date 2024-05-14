@@ -7,7 +7,7 @@ export class Transcriber {
   /**
    * Model file.
    *
-   * @private
+   * @protected
    * @type {string|File}
    */
   _model = null;
@@ -22,7 +22,7 @@ export class Transcriber {
   /**
    * Is shout runtime initialized.
    *
-   * @private
+   * @protected
    * @type {boolean}
    */
   _isRuntimeInitialized = false;
@@ -38,7 +38,7 @@ export class Transcriber {
   /**
    * Model filename in wasm filesystem.
    *
-   * @private
+   * @protected
    * @type {string}
    */
   _modelFilename = "model.bin";
@@ -181,7 +181,7 @@ export class Transcriber {
   /**
    * Unload model file and free wasm memory.
    *
-   * @private
+   * @protected
    */
   _freeWasmModule() {
     if (!this.isRuntimeInitialized) return;
@@ -200,7 +200,7 @@ export class Transcriber {
   /**
    * Load model file into wasm filesystem.
    *
-   * @private
+   * @protected
    * @returns {Promise<void>}
    */
   async _loadModel() {
