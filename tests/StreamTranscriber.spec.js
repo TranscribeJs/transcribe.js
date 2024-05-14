@@ -98,6 +98,7 @@ describe("StreamTranscriber", () => {
         transcriber._streamAudioContext.audioWorklet.addModule
       ).toHaveBeenCalledWith("audio-worklets/buffer.js");
       expect(transcriber._onReady).toHaveBeenCalled();
+      expect(transcriber.isReady).toBe(true);
 
       vi.unstubAllGlobals();
     });

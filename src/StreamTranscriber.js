@@ -116,6 +116,7 @@ export class StreamTranscriber extends Transcriber {
     );
 
     this._onReady();
+    this._isReady = true;
   }
 
   /**

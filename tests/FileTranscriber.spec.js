@@ -62,6 +62,7 @@ describe("FileTranscriber", () => {
         transcriber.dtwType
       );
       expect(transcriber._onReady).toHaveBeenCalled();
+      expect(transcriber.isReady).toBe(true);
     });
   });
 

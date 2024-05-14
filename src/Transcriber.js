@@ -23,9 +23,17 @@ export class Transcriber {
    * Is shout runtime initialized.
    *
    * @private
-   * @type boolean
+   * @type {boolean}
    */
   _isRuntimeInitialized = false;
+
+  /**
+   * Is everything initialized and ready to transcribe.
+   *
+   * @protected
+   * @type {boolean}
+   */
+  _isReady = false;
 
   /**
    * Model filename in wasm filesystem.
@@ -105,6 +113,15 @@ export class Transcriber {
    */
   get isRuntimeInitialized() {
     return this._isRuntimeInitialized;
+  }
+
+  /**
+   * True when ready to transcribe.
+   *
+   * @type {boolean}
+   */
+  get isReady() {
+    return this._isReady;
   }
 
   /**

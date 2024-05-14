@@ -92,6 +92,7 @@ export class FileTranscriber extends Transcriber {
 
     this.Module.init(this.modelInternalFilename, this.dtwType);
     this._onReady();
+    this._isReady = true;
   }
 
   /**
