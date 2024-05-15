@@ -11,14 +11,12 @@
 
 - `Transcriber.isReady` property
 - callback setter in `FileTranscriber` & `StreamTranscriber`
-
   - `FileTranscriber.onComplete`
   - `FileTranscriber.onCanceled`
   - `FileTranscriber.onProgress`
   - `FileTranscriber.onSegment`
   - `StreamTranscriber.onSegement`
   - `StreamTranscriber.onStreamStatus`
-
 - `FileTranscriber.destroy()` & `StreamTranscriber.destroy()`
 - `token_timestamps` option to `FileTranscriber.transcribe('myfile.mp', {..., token_timestamps: false})`
 
