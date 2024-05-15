@@ -116,6 +116,7 @@ describe("FileTranscriber", () => {
         max_len: 100,
         split_on_word: true,
         suppress_non_speech: true,
+        token_timestamps: false,
       };
       transcriber._isRuntimeInitialized = true;
       transcriber._loadAudio = vi.fn().mockResolvedValue(audio);
@@ -139,7 +140,8 @@ describe("FileTranscriber", () => {
         options.translate,
         options.max_len,
         options.split_on_word,
-        options.suppress_non_speech
+        options.suppress_non_speech,
+        options.token_timestamps
       );
 
       expect(resolvePromise).toHaveBeenCalledWith(expectedResult);

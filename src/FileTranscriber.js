@@ -142,6 +142,7 @@ export class FileTranscriber extends Transcriber {
    * @param {number} [options.max_len=0] Maximum segment length in characters.
    * @param {boolean} [options.split_on_word=false] Split the text on word.
    * @param {boolean} [options.suppress_non_speech=false] Suppress non-speech.
+   * @param {boolean} [options.token_timestamps=true] Calculate token timestamps.
    * @returns {Promise<import("./types.d.ts").TranscribeResult>}
    */
   async transcribe(
@@ -153,6 +154,7 @@ export class FileTranscriber extends Transcriber {
       max_len = 0,
       split_on_word = false,
       suppress_non_speech = false,
+      token_timestamps = true,
     } = {}
   ) {
     if (!this.isRuntimeInitialized) {
@@ -175,7 +177,8 @@ export class FileTranscriber extends Transcriber {
         translate,
         max_len,
         split_on_word,
-        suppress_non_speech
+        suppress_non_speech,
+        token_timestamps
       );
       this._resolveComplete = resolve;
     });

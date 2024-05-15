@@ -351,7 +351,8 @@ int bind_cancel() {
 
 int bind_transcribe(const emscripten::val &audio, const std::string &lang,
                     int nthreads, bool translate, int max_len,
-                    bool split_on_word, bool suppress_non_speech_tokens) {
+                    bool split_on_word, bool suppress_non_speech_tokens,
+                    bool token_timestamps) {
 
   if (g_worker.joinable()) {
     g_worker.join();
@@ -399,7 +400,7 @@ int bind_transcribe(const emscripten::val &audio, const std::string &lang,
       nthreads, std::min(16, mpow2(std::thread::hardware_concurrency())));
   wparams.offset_ms = 0;
 
-  wparams.token_timestamps = true;
+  wparams.token_timestamps = token_timestamps;
   wparams.max_len = max_len;
   wparams.split_on_word = split_on_word;
   wparams.suppress_non_speech_tokens = suppress_non_speech_tokens;

@@ -32,13 +32,13 @@ export type TranscribeToken = {
   text: string;
 
   /** Text time offset. */
-  offsets: {
+  offsets?: {
     from: number;
     to: number;
   };
 
   /** Offset as timestamp hh:mm:ss,sss */
-  timestamps: {
+  timestamps?: {
     /** hh:mm:ss,sss */
     from: string;
     /** hh:mm:ss,sss */
@@ -198,7 +198,7 @@ export type FileTranscribeOptions = {
   lang?: string;
 
   /**
-   * Number of threads to use, defaults to max threads available
+   * Number of threads to use, defaults to max threads available.
    */
   threads?: number;
 
@@ -209,22 +209,28 @@ export type FileTranscribeOptions = {
   translate?: boolean;
 
   /**
-   * Maximum number of characters in a single segment, 0 for not set
+   * Maximum number of characters in a single segment, 0 for not set.
    * @default 0
    */
   max_len?: number;
 
   /**
-   * If true, transcriber will try to split the text on word boundaries
+   * If true, transcriber will try to split the text on word boundaries.
    * @default false
    */
   split_on_word?: boolean;
 
   /**
-   * If true, transcriber will try to suppress non-speech segments
+   * If true, transcriber will try to suppress non-speech segments.
    * @default false
    */
   suppress_non_speech?: boolean;
+
+  /**
+   * If true, calculates word level timestamps.
+   * @default true
+   */
+  token_timestamps?: boolean;
 };
 
 export type StreamStartOptions = {
