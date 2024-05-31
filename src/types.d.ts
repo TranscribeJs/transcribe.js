@@ -89,8 +89,11 @@ export type TranscriberOptions = {
   /**
    * Emscripten exported createModule function.
    * @see {@link https://emscripten.org/docs/api_reference/module.html}
+   *
+   * @param {any} moduleArg Used to override module defaults.
+   * @returns {Promise<any>} Returns the module object.
    */
-  createModule: (moduleArg = {}) => Promise<any>;
+  createModule: (moduleArg?: Object) => Promise<any>;
 
   /**
    * Whisper.cpp model file in ggml format.
