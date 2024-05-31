@@ -24,6 +24,7 @@
     </script>
 
     <script type="module">
+      import createModule from "@transcribe/shout";
       import { FileTranscriber } from "@transcribe/transcriber";
 
       // Preload model
@@ -48,6 +49,8 @@
 
       // New Transcriber
       const transcriber = new FileTranscriber({
+        createModule,
+
         model: modelFile,
 
         print: printConsole,

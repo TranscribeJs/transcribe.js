@@ -1,5 +1,6 @@
 import { FileTranscriber } from "../src/FileTranscriber";
 import { expect, describe, it, vi } from "vitest";
+import createModule from "./mocks/shout";
 
 describe("FileTranscriber", () => {
   const model = new File([""], "modelFilename.bin");
@@ -73,6 +74,7 @@ describe("FileTranscriber", () => {
     it("should initialize the transcriber module and call the onReady callback", async () => {
       // Arrange
       const transcriber = new FileTranscriber({
+        createModule,
         model,
         onReady: vi.fn(),
       });
@@ -94,7 +96,7 @@ describe("FileTranscriber", () => {
   describe("transcribe", () => {
     it("should throw an error if transcriber is not initialized", async () => {
       // Arrange
-      const transcriber = new FileTranscriber({ model });
+      const transcriber = new FileTranscriber({ createModule, model });
       // Act & Assert
       await expect(transcriber.transcribe(new Float32Array())).rejects.toThrow(
         "transcriber not initialized."
@@ -104,7 +106,11 @@ describe("FileTranscriber", () => {
     it("should transcribe the audio and resolve with the result", async () => {
       // Arrange
       const onComplete = vi.fn();
-      const transcriber = new FileTranscriber({ model, onComplete });
+      const transcriber = new FileTranscriber({
+        createModule,
+        model,
+        onComplete,
+      });
       await transcriber.init();
 
       // mock everything

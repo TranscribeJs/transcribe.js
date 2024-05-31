@@ -68,6 +68,8 @@ You can use Transcribe.js without a bundler or package manager. Download the fil
 
 <!-- use type="module" for es6 imports -->
 <script type="module">
+  import createModule from "/your/project/shout.wasm.js"; // path where you've copied before
+  // import createModule from "@transcribe/shout";  // if you use an import map
   import { FileTranscriber } from "@transcribe/transcriber";
 
   ...
@@ -79,10 +81,13 @@ You can use Transcribe.js without a bundler or package manager. Download the fil
 For full code examples and advanced usage please see https://www.transcribejs.dev or check out the [File Transcriber Example](https://examples.transcribejs.dev/examples/index.html).
 
 ```js
+import createModule from "/your/project/shout.wasm.js"; // path where you've copied before
+// import createModule from "@transcribe/shout";  // if you use an import map
 import { FileTranscriber } from "@transcribe/transcriber";
 
 // create new instance
 const transcriber = new FileTranscriber({
+  createModule, // create module function from emscripten build
   model: "/your/project/ggml-tiny-q5_1.bin", // path to ggml model file
   workerPath: "/your/project", // directory of shout.wasm.worker.mjs copied before
 });

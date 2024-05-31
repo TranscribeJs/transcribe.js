@@ -1,5 +1,6 @@
 import { StreamTranscriber } from "../src/StreamTranscriber";
 import { expect, describe, it, vi, beforeEach, afterEach } from "vitest";
+import createModule from "./mocks/shout";
 
 describe("StreamTranscriber", () => {
   const model = new File([""], "modelFilename.bin");
@@ -17,6 +18,7 @@ describe("StreamTranscriber", () => {
     it("should set the options and initialize the transcriber module", () => {
       // Arrange
       const options = {
+        createModule,
         model: "model",
         onReady: vi.fn(),
         onSegment: vi.fn(),
@@ -53,6 +55,7 @@ describe("StreamTranscriber", () => {
     it("should return the audio worklet path if set in options", () => {
       // Arrange
       const transcriber = new StreamTranscriber({
+        createModule,
         audioWorkletsPath: "/path/",
       });
 
@@ -95,6 +98,7 @@ describe("StreamTranscriber", () => {
     it("should initialize the transcriber module and call the onReady callback", async () => {
       // Arrange
       const transcriber = new StreamTranscriber({
+        createModule,
         model,
         audioWorkletsPath: "audio-worklets",
         onReady: vi.fn(),
@@ -130,7 +134,7 @@ describe("StreamTranscriber", () => {
 
     it("should start stream transcription with defaults", async () => {
       // Arrange
-      const transcriber = new StreamTranscriber({ model });
+      const transcriber = new StreamTranscriber({ createModule, model });
       await transcriber.init();
 
       // Act
@@ -156,7 +160,7 @@ describe("StreamTranscriber", () => {
         userAgent: "Chrome",
       });
 
-      const transcriber = new StreamTranscriber({ model });
+      const transcriber = new StreamTranscriber({ createModule, model });
       await transcriber.init();
 
       transcriber.Module.startStream = vi.fn();
@@ -172,7 +176,7 @@ describe("StreamTranscriber", () => {
 
     it("should not start stream transcription if it is already running", async () => {
       // Arrange
-      const transcriber = new StreamTranscriber({ model });
+      const transcriber = new StreamTranscriber({ createModule, model });
       await transcriber.init();
 
       transcriber._isStreamRunning = true;

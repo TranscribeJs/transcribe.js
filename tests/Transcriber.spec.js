@@ -20,6 +20,7 @@ describe("Transcriber", () => {
     );
 
     transcriber = new Transcriber({
+      createModule,
       model: "path/to/my-model.bin",
       print,
       printErr,
@@ -139,7 +140,7 @@ describe("Transcriber", () => {
     });
 
     it("should fetch model if string and not containing slash", async () => {
-      transcriber = new Transcriber({ model: "my-model.bin" });
+      transcriber = new Transcriber({ createModule, model: "my-model.bin" });
       await transcriber.init();
       expect(window.fetch).toHaveBeenCalledWith("my-model.bin");
       expect(transcriber.modelInternalFilename).toBe("my-model.bin");
@@ -150,6 +151,7 @@ describe("Transcriber", () => {
       model.arrayBuffer = vi.fn(() => Promise.resolve(new ArrayBuffer(8)));
 
       transcriber = new Transcriber({
+        createModule,
         model,
       });
 

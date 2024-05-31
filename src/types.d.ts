@@ -87,6 +87,12 @@ export type TranscribeResult = {
 
 export type TranscriberOptions = {
   /**
+   * Emscripten exported createModule function.
+   * @see {@link https://emscripten.org/docs/api_reference/module.html}
+   */
+  createModule: (moduleArg = {}) => Promise<any>;
+
+  /**
    * Whisper.cpp model file in ggml format.
    * Will fetch if string, otherwise will use the provided file.
    * @see {@link https://huggingface.co/ggerganov/whisper.cpp}

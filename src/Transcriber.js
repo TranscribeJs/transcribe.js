@@ -1,9 +1,15 @@
-import createModule from "@transcribe/shout";
-
 /**
  * Base class for transcribers.
  */
 export class Transcriber {
+  /**
+   * Emscripten createModule function.
+   *
+   * @protected
+   * @type {function}
+   */
+  _createModule;
+
   /**
    * Model file.
    *
@@ -48,8 +54,10 @@ export class Transcriber {
    * @param {import("./types.d.ts").TranscriberOptions} options
    */
   constructor(options) {
-    // override Emscripten Module callbacks
+    this._createModule = options.createModule;
     this._model = options.model;
+
+    // override Emscripten Module callbacks
     this.Module.print = options.print || console.log;
     this.Module.printErr = options.printErr || console.log;
     this.Module.preInit = options.preInit;
@@ -133,7 +141,7 @@ export class Transcriber {
       return;
     }
 
-    this.Module = await createModule(this.Module);
+    this.Module = await this._createModule(this.Module);
     await this._loadModel();
   }
 
@@ -176,6 +184,7 @@ export class Transcriber {
     this._freeWasmModule();
     this._model = null;
     this.Module = null;
+    this._createModule = null;
   }
 
   /**

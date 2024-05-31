@@ -24,6 +24,7 @@
     </script>
 
     <script type="module">
+      import createModule from "@transcribe/shout";
       import { StreamTranscriber } from "@transcribe/transcriber";
 
       // Preload model
@@ -48,6 +49,8 @@
 
       // create a new transcriber instance with callbacks
       const transcriber = new StreamTranscriber({
+        createModule,
+
         // model, you can try larger models, but they tend to be too slow for realtime transcription
         model: "/examples/ggml-tiny-q5_1.bin",
 
