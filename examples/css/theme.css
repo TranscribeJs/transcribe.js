@@ -9,14 +9,30 @@
 :root {
   --theme-color: #aa69af;
   --theme-color-dark: #97599b;
+  --theme-color-light: #fbc1ff;
 
   --background-body: #3f3f3f;
-  --button-base: var(--theme-color);
-  --button-hover: var(--theme-color-dark);
-  --links: var(--theme-color);
-  --text-main: #c8c8c8;
-  --text-bright: #c8c8c8;
-  --code: #f7c2d6d6;
+  --background: #343434;
+  --background-alt: rgb(30, 30, 30);
+  --links: var(--theme-color-light);
+  --text-main: #d4d4d4;
+  --text-bright: #dbdbdb;
+  --code: var(--text-bright);
+  --border: var(--text-main);
+  --focus: var(--theme-color-dark);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --theme-color-light: #aa69af;
+    --background-body: #f4f4f4;
+    --background: #f0f0f0;
+    --links: #7b3680;
+    --text-main: #333;
+    --text-bright: #000;
+    --code: var(--background-body);
+    --border: var(--text-main);
+  }
 }
 
 body {
@@ -31,11 +47,26 @@ body {
 
 pre {
   margin: 0;
+  margin-top: 1rlh !important;
+  border-radius: 5px;
+  width: 100%;
+}
+
+code {
+  padding: 0.125rlh 0.5rlh;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 
 code,
 pre {
-  font-size: 0.875rem;
+  color: var(--code);
+  background: var(--background-alt);
+  font-size: 0.875rem !important;
+}
+
+.token.keyword {
+  color: var(--theme-color-light);
 }
 
 ul,
@@ -46,12 +77,90 @@ p {
   max-width: 70ch;
 }
 
+ul li {
+  padding: 0.25rlh 0;
+}
+
 h1,
-h2 {
+h2,
+h3 {
+  line-height: 3rlh;
   text-wrap: balance;
-  line-height: 1.2;
+  padding-top: 1rlh;
+}
+
+h2,
+h3 {
+  line-height: 2rlh;
+  padding-top: 1rlh;
 }
 
 .flow > * + * {
   margin-top: 1.5rem;
+}
+
+/* BUTTONS */
+button,
+.btn {
+  display: inline-block;
+  margin: 0.5rem;
+  padding: 0.55rlh 2rem 0.45rlh;
+
+  border-radius: 2rem;
+  border: 1px solid var(--theme-color);
+  background: var(--theme-color-dark);
+
+  color: #fff;
+
+  font-size: 1.125rem;
+  letter-spacing: 0.1rem;
+  text-decoration: none;
+  text-align: center;
+
+  transition: background-color 0.15s ease;
+}
+
+button.small {
+  padding: 0.45rlh 1.5rem 0.35rlh;
+  font-size: 1rem;
+}
+
+button.outline,
+.btn.outline {
+  background: none;
+  color: var(--theme-color);
+  font-weight: 600;
+}
+
+button:hover,
+.btn:hover {
+  background: var(--theme-color-dark);
+  color: #fff;
+  text-decoration: none;
+  font-weight: inherit;
+}
+
+a {
+  text-decoration: underline;
+  text-underline-offset: 0.2rlh;
+}
+
+a:hover {
+  font-weight: 800;
+}
+
+a.unstyled {
+  text-decoration: none;
+  color: unset;
+}
+
+a.unstyled:hover {
+  text-decoration: none;
+  color: unset;
+}
+
+a:has(img) {
+  display: inline-block;
+  line-height: 0;
+  text-decoration: none;
 }
