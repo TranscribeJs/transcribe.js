@@ -1,5 +1,35 @@
 # Changelog
 
+## [2.0.0] - 2024-05-31
+
+### Breaking
+
+Removed the direct dependency of `@transcribe/shout` in `Transcriber` classes and pass `createModule()` as a constructor parameter instead.
+
+**Why?** The wasm build can't be bundled so a manual import is easier than dealing with bundler exclude configs and remapping imports.
+
+You need to change the following in your code:
+
+```diff
++ import createModule from "/your/project/shout.wasm.js";
+import { FileTranscriber } from "@transcribe/transcriber";
+
+// create new instance
+const transcriber = new FileTranscriber({
++ createModule, // create module function from emscripten build
+  model: "/your/project/ggml-tiny-q5_1.bin", // path to ggml model file
+  workerPath: "/your/project", // directory of shout.wasm.worker.mjs copied before
+});
+```
+
+### Changed
+
+- updated whisper.cpp to v1.6.2
+
+### Fixed
+
+- align demo styles with docs
+
 ## [1.0.0] - 2024-05-15
 
 ### Breaking
