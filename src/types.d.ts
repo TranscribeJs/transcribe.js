@@ -93,7 +93,7 @@ export type TranscriberOptions = {
    * @param {any} moduleArg Used to override module defaults.
    * @returns {Promise<any>} Returns the module object.
    */
-  createModule: (moduleArg?: Object) => Promise<any>;
+  createModule: (moduleArg?: {}) => Promise<any>;
 
   /**
    * Whisper.cpp model file in ggml format.

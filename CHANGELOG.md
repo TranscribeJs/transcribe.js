@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.1] - 2024-05-31
+
+### Changed
+
+- added `index.d.ts` to `@transcribe/shout`
+
 ## [2.0.0] - 2024-05-31
 
 ### Breaking

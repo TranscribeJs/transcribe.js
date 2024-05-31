@@ -1,6 +1,6 @@
 {
   "name": "@transcribe/transcriber",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Transcribe speech to text in the browser.",
   "type": "module",
   "browser": "./src/index.js",
