@@ -1,12 +1,12 @@
 {
   "name": "@transcribe/transcriber",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Transcribe speech to text in the browser.",
   "type": "module",
   "browser": "./src/index.js",
   "types": "./index.d.ts",
   "peerDependencies": {
-    "@transcribe/shout": "~1.0.1"
+    "@transcribe/shout": "~1.0.3"
   },
   "repository": {
     "type": "git",

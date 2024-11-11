@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.0.2] - 2024-11-11
+
+### Changed
+
+- wasm memory
+  - reduced initial memory allocation to 512MB
+  - enabled allow memory growth
+- updated whisper.cpp to v1.7.1
+- bump @transcribe/shout peer dependency to v1.0.3
+- updated dev dependencies
+
+### Fixed
+
+- fix `Uncaught RangeError: ... could not allocate memory` on `init()` on machines with less memory available
+
 ## [2.0.1] - 2024-05-31
 
 ### Changed

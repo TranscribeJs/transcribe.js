@@ -221,3 +221,7 @@ Thank you to the creators and contributors of the following open source librarie
 - `examples/albert.ogg`
   <a href="https://commons.wikimedia.org/wiki/File:03_ALBERT_EINSTEIN.ogg">Radio Universidad Nacional de La Plata</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>, via Wikimedia Commons
 - `examples/jfk.wav`: <a href="https://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>, via Wikimedia Commons
+
+### Sponsoring
+
+This project is tested with BrowserStack
