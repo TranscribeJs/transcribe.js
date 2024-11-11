@@ -21,11 +21,11 @@
   "author": "thurti",
   "license": "MIT",
   "devDependencies": {
-    "@playwright/test": "^1.43.1",
-    "@types/node": "^20.12.7",
+    "@playwright/test": "^1.48.2",
+    "@types/node": "^22.9.0",
     "fft.js": "^4.0.4",
-    "globby": "^14.0.1",
-    "jsdom": "^24.0.0",
-    "vitest": "^1.5.0"
+    "globby": "^14.0.2",
+    "jsdom": "^25.0.1",
+    "vitest": "^2.1.4"
   }
 }
