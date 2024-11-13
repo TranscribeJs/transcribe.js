@@ -22,6 +22,11 @@ if (WHISPER_WASM_SINGLE_FILE)
     message(STATUS "Embedding transcribe.wasm inside transcribe.wasm.js")
 endif()
 
+if (NO_SIMD)
+    # remove -msimd128 set in whisper.cpp/ggml/src/CMakeList.txt to disable SIMD
+    set_target_properties(ggml PROPERTIES COMPILE_FLAGS "")
+endif()
+
 set_target_properties(${TARGET} PROPERTIES LINK_FLAGS " \
     --bind \
     -s USE_PTHREADS=1 \
