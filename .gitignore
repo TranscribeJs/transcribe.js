@@ -1,5 +1,7 @@
 examples/*.bin
+examples/models/*.bin
 !examples/ggml-tiny-q5_1.bin
+!examples/models/ggml-tiny-q5_1.bin
 node_modules/
 /test-results/
 /playwright-report/

@@ -13,108 +13,112 @@
   <body>
     <script src="model-loader.js"></script>
 
-    <!-- set paths to js files -->
-    <script type="importmap">
-      {
-        "imports": {
-          "@transcribe/shout": "../src/shout/shout.wasm.js",
-          "@transcribe/transcriber": "../src/index.js"
-        }
-      }
-    </script>
-
     <script type="module">
-      import createModule from "@transcribe/shout";
-      import { FileTranscriber } from "@transcribe/transcriber";
+      import { simd } from "./lib/simd.js";
+      import { default as createModuleSimd } from "../src/shout/shout.wasm.js";
+      import { default as createModuleNoSimd } from "../src/shout/shout.wasm_no-simd.js";
+      import { FileTranscriber } from "../src/index.js";
 
-      // Preload model
-      const path = location.pathname.replace(/\/[^/]+$/, "");
-      const modelFile = `${path}/ggml-tiny-q5_1.bin`;
+      (async function () {
+        // feature detect simd support
+        // only if you need to support browsers/devices without simd support
+        const createModule = (await simd())
+          ? createModuleSimd
+          : createModuleNoSimd;
 
-      preloadModel(modelFile, printConsole).then((loaded) => {
-        if (loaded) {
-          document.querySelector(".start").removeAttribute("disabled");
-          document.querySelector(".cancel").removeAttribute("disabled");
-          document.querySelector(".preload-model").style.display = "none";
-        }
-      });
+        // Preload model
+        const path = location.pathname.replace(/\/[^/]+$/, "");
+        const modelFile = `${path}/models/ggml-tiny-q5_1.bin`;
 
-      // Console output
-      const consoleOutput = document.querySelector(".console");
-
-      function printConsole(msg) {
-        consoleOutput.innerText += msg + "\n";
-        consoleOutput.scrollTop = consoleOutput.scrollHeight;
-      }
-
-      // New Transcriber
-      const transcriber = new FileTranscriber({
-        createModule,
-
-        model: modelFile,
-
-        print: printConsole,
-        printErr: printConsole,
-
-        onReady: () => {
-          console.log("Ready to transcribe.");
-        },
-
-        onProgress: (progress) => {
-          console.log("Progress", progress);
-        },
-
-        onCanceled: () => {
-          console.log("Canceled");
-        },
-
-        onComplete: () => {
-          console.log("Transcription complete.");
-        },
-      });
-
-      // transcribe audio file
-      async function transcript() {
-        try {
-          await transcriber.init();
-
-          const result = await transcriber.transcribe("/examples/jfk.wav", {
-            lang: "en",
-          });
-
-          console.log(result);
-
-          document.querySelector(".result").innerText = "";
-
-          result.transcription.forEach((segment) => {
-            document.querySelector(".result").innerText += segment.text + "\n";
-          });
-        } catch (error) {
-          console.error("Error transcribing", error);
-        }
-      }
-
-      // Button events
-      document.querySelector(".start").addEventListener("click", async () => {
-        document.querySelector(".result").innerHTML = "<em>processing...</em>";
-        transcript();
-      });
-
-      document.querySelector(".cancel").addEventListener("click", async () => {
-        transcriber.cancel();
-      });
-
-      document
-        .querySelector(".preload-model")
-        .addEventListener("click", async (e) => {
-          await preloadModel(modelFile, printConsole).then((loaded) => {
-            if (loaded) {
-              document.querySelector(".start").removeAttribute("disabled");
-              document.querySelector(".cancel").removeAttribute("disabled");
-              document.querySelector(".preload-model").style.display = "none";
-            }
-          });
+        preloadModel(modelFile, printConsole).then((loaded) => {
+          if (loaded) {
+            document.querySelector(".start").removeAttribute("disabled");
+            document.querySelector(".cancel").removeAttribute("disabled");
+            document.querySelector(".preload-model").style.display = "none";
+          }
         });
+
+        // Console output
+        const consoleOutput = document.querySelector(".console");
+
+        function printConsole(msg) {
+          consoleOutput.innerText += msg + "\n";
+          consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+        // New Transcriber
+        const transcriber = new FileTranscriber({
+          createModule,
+
+          model: modelFile,
+
+          print: printConsole,
+          printErr: printConsole,
+
+          onReady: () => {
+            console.log("Ready to transcribe.");
+          },
+
+          onProgress: (progress) => {
+            console.log("Progress", progress);
+          },
+
+          onCanceled: () => {
+            console.log("Canceled");
+          },
+
+          onComplete: () => {
+            console.log("Transcription complete.");
+          },
+        });
+
+        // transcribe audio file
+        async function transcript() {
+          try {
+            await transcriber.init();
+
+            const result = await transcriber.transcribe("/examples/jfk.wav", {
+              lang: "en",
+            });
+
+            console.log(result);
+
+            document.querySelector(".result").innerText = "";
+
+            result.transcription.forEach((segment) => {
+              document.querySelector(".result").innerText +=
+                segment.text + "\n";
+            });
+          } catch (error) {
+            console.error("Error transcribing", error);
+          }
+        }
+
+        // Button events
+        document.querySelector(".start").addEventListener("click", async () => {
+          document.querySelector(".result").innerHTML =
+            "<em>processing...</em>";
+          transcript();
+        });
+
+        document
+          .querySelector(".cancel")
+          .addEventListener("click", async () => {
+            transcriber.cancel();
+          });
+
+        document
+          .querySelector(".preload-model")
+          .addEventListener("click", async (e) => {
+            await preloadModel(modelFile, printConsole).then((loaded) => {
+              if (loaded) {
+                document.querySelector(".start").removeAttribute("disabled");
+                document.querySelector(".cancel").removeAttribute("disabled");
+                document.querySelector(".preload-model").style.display = "none";
+              }
+            });
+          });
+      })();
     </script>
     <div class="flow">
       <h1>Transcribe.js - FileTranscriber</h1>

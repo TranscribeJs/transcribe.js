@@ -13,116 +13,116 @@
   <body>
     <script src="model-loader.js"></script>
 
-    <!-- set paths to js files -->
-    <script type="importmap">
-      {
-        "imports": {
-          "@transcribe/shout": "../src/shout/shout.wasm.js",
-          "@transcribe/transcriber": "../src/index.js"
-        }
-      }
-    </script>
-
     <script type="module">
-      import createModule from "@transcribe/shout";
-      import { StreamTranscriber } from "@transcribe/transcriber";
+      import { simd } from "./lib/simd.js";
+      import { default as createModuleSimd } from "../src/shout/shout.wasm.js";
+      import { default as createModuleNoSimd } from "../src/shout/shout.wasm_no-simd.js";
+      import { StreamTranscriber } from "../src/index.js";
 
-      // Preload model
-      const path = location.pathname.replace(/\/[^/]+$/, "");
-      const modelFile = `${path}/ggml-tiny-q5_1.bin`;
+      (async function () {
+        // feature detect simd support
+        // only if you need to support browsers/devices without simd support
+        const createModule = (await simd())
+          ? createModuleSimd
+          : createModuleNoSimd;
 
-      preloadModel(
-        modelFile,
-        (msg) => (document.querySelector(".status").innerText = msg)
-      ).then((loaded) => {
-        if (loaded) {
-          document.querySelector(".audio").removeAttribute("disabled");
-          document.querySelector(".start").removeAttribute("disabled");
-          document.querySelector(".stop").removeAttribute("disabled");
+        // Preload model
+        const path = location.pathname.replace(/\/[^/]+$/, "");
+        const modelFile = `${path}/models/ggml-tiny-q5_1.bin`;
+
+        preloadModel(
+          modelFile,
+          (msg) => (document.querySelector(".status").innerText = msg)
+        ).then((loaded) => {
+          if (loaded) {
+            document.querySelector(".audio").removeAttribute("disabled");
+            document.querySelector(".start").removeAttribute("disabled");
+            document.querySelector(".stop").removeAttribute("disabled");
+          }
+        });
+
+        // callback for voice activity
+        const onVoiceActivity = (active) => {
+          document.querySelector(".vad").innerText = active ? "🔴" : "";
+        };
+
+        // create a new transcriber instance with callbacks
+        const transcriber = new StreamTranscriber({
+          createModule,
+
+          // model, you can try larger models, but they tend to be too slow for realtime transcription
+          model: modelFile,
+
+          // on transcribe callback
+          onSegment: (result) => {
+            document.querySelector(".transcript").innerText =
+              result?.segment?.text ?? "";
+          },
+
+          // on status change callback
+          onStreamStatus: (status) => {
+            document.querySelector(".status").innerText = status;
+          },
+        });
+
+        // initialize the transcriber
+        async function init() {
+          try {
+            await transcriber.init();
+          } catch (error) {
+            console.error("Error transcribing", error);
+          }
         }
-      });
 
-      // callback for voice activity
-      const onVoiceActivity = (active) => {
-        document.querySelector(".vad").innerText = active ? "🔴" : "";
-      };
+        // stream audio from a file
+        let audio;
+        async function streamAudio() {
+          audio?.pause();
+          audio = null;
 
-      // create a new transcriber instance with callbacks
-      const transcriber = new StreamTranscriber({
-        createModule,
+          await init();
+          // start waiting for audio
+          await transcriber.start({ lang: "en" });
 
-        // model, you can try larger models, but they tend to be too slow for realtime transcription
-        model: "/examples/ggml-tiny-q5_1.bin",
+          audio = new Audio("/examples/albert.ogg");
+          await audio.play();
+          const stream = audio.captureStream
+            ? audio.captureStream()
+            : audio.mozCaptureStream();
 
-        // on transcribe callback
-        onSegment: (result) => {
-          document.querySelector(".transcript").innerText =
-            result?.segment?.text ?? "";
-        },
-
-        // on status change callback
-        onStreamStatus: (status) => {
-          document.querySelector(".status").innerText = status;
-        },
-      });
-
-      // initialize the transcriber
-      async function init() {
-        try {
-          await transcriber.init();
-        } catch (error) {
-          console.error("Error transcribing", error);
+          transcriber.transcribe(stream, { onVoiceActivity });
         }
-      }
 
-      // stream audio from a file
-      let audio;
-      async function streamAudio() {
-        audio?.pause();
-        audio = null;
+        async function stream() {
+          await init();
+          // start waiting for audio
+          await transcriber.start({ lang: "en" });
 
-        await init();
-        // start waiting for audio
-        await transcriber.start({ lang: "en" });
+          // get the microphone audio stream
+          navigator.mediaDevices
+            .getUserMedia({ audio: true, video: false })
+            .then((stream) => {
+              // transcribe the audio stream
+              transcriber.transcribe(stream, { onVoiceActivity });
+            });
+        }
 
-        audio = new Audio("/examples/albert.ogg");
-        await audio.play();
-        const stream = audio.captureStream
-          ? audio.captureStream()
-          : audio.mozCaptureStream();
+        // start the audio stream
+        document.querySelector(".audio").addEventListener("click", () => {
+          streamAudio();
+        });
 
-        transcriber.transcribe(stream, { onVoiceActivity });
-      }
+        // start the stream
+        document.querySelector(".start").addEventListener("click", () => {
+          stream();
+        });
 
-      async function stream() {
-        await init();
-        // start waiting for audio
-        await transcriber.start({ lang: "en" });
-
-        // get the microphone audio stream
-        navigator.mediaDevices
-          .getUserMedia({ audio: true, video: false })
-          .then((stream) => {
-            // transcribe the audio stream
-            transcriber.transcribe(stream, { onVoiceActivity });
-          });
-      }
-
-      // start the audio stream
-      document.querySelector(".audio").addEventListener("click", () => {
-        streamAudio();
-      });
-
-      // start the stream
-      document.querySelector(".start").addEventListener("click", () => {
-        stream();
-      });
-
-      // stop the stream
-      document.querySelector(".stop").addEventListener("click", async () => {
-        await transcriber.stop();
-        audio?.pause();
-      });
+        // stop the stream
+        document.querySelector(".stop").addEventListener("click", async () => {
+          await transcriber.stop();
+          audio?.pause();
+        });
+      })();
     </script>
 
     <main class="flow">
