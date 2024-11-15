@@ -18,13 +18,15 @@
     "dev": "node ./dev-server.js",
     "test:unit": "vitest",
     "test:e2e": "npx playwright test",
-    "test:e2e-ui": "npx playwright test --ui"
+    "test:e2e-ui": "npx playwright test --ui",
+    "test:e2e-browserstack": "npx browserstack-node-sdk playwright test"
   },
   "author": "thurti",
   "license": "MIT",
   "devDependencies": {
     "@playwright/test": "^1.48.2",
     "@types/node": "^22.9.0",
+    "browserstack-node-sdk": "^1.34.23",
     "fft.js": "^4.0.4",
     "globby": "^14.0.2",
     "jsdom": "^25.0.1",
