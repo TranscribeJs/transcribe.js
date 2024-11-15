@@ -26,6 +26,12 @@ Your webserver must serve the files with cross origin headers.
 `"Cross-Origin-Embedder-Policy": "require-corp"`  
 `"Cross-Origin-Opener-Policy": "same-origin"`
 
+### Browser
+
+Your browser must support `SharedArrayBuffer`. ([brower support](https://caniuse.com/sharedarraybuffer))
+
+The default wasm files are built with SIMD enabled. If your browser/device doens't support SIMD **use the `no-simd` files** instead. Also check out the example code on how to use it. ([brower support](https://caniuse.com/wasm-simd))
+
 ### Model File
 
 You need a ggml model file to run Transcribe.js. You can download them on hugging face https://huggingface.co/ggerganov/whisper.cpp/tree/main . You should start with the (quantized) tiny or base models. Larger models propably won't work but you can try it, though.
@@ -47,7 +53,11 @@ copy the shout.wasm and webworker files to your project directory
 cp node_modules/@transcribe/shout/src/shout/shout.wasm.worker.mjs /your/project
 cp node_modules/@transcribe/shout/src/shout/shout.wasm.js /your/project
 
-# copy audio-worklets, only needed if you want to use StreamTranscriber
+# optional: copy no-simd build
+cp node_modules/@transcribe/shout/src/shout/shout.wasm.worker_no-simd.mjs /your/project
+cp node_modules/@transcribe/shout/src/shout/shout.wasm_no-simd.js /your/project
+
+# optional: copy audio-worklets, only needed if you want to use StreamTranscriber
 cp -r node_modules/@transcribe/transcriber/src/audio-worklets /your/project
 ```
 
