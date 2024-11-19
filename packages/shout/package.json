@@ -3,7 +3,7 @@
   "version": "1.0.3",
   "description": "Wasm build based on whisper.cpp.",
   "type": "module",
-  "browser": "./index.js",
+  "main": "./index.js",
   "types": "./index.d.ts",
   "repository": {
     "type": "git",

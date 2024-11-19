@@ -15,9 +15,9 @@
 
     <script type="module">
       import { simd } from "./lib/simd.js";
-      import { default as createModuleSimd } from "../src/shout/shout.wasm.js";
-      import { default as createModuleNoSimd } from "../src/shout/shout.wasm_no-simd.js";
-      import { FileTranscriber } from "../src/index.js";
+      import { default as createModuleSimd } from "../src/shout/shout.wasm.js?v1.0.3";
+      import { default as createModuleNoSimd } from "../src/shout/shout.wasm_no-simd.js?v1.0.3";
+      import { FileTranscriber } from "../src/index.js?v2.0.2";
 
       (async function () {
         // feature detect simd support

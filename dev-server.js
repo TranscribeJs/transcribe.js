@@ -12,14 +12,17 @@ const server = http.createServer((req, res) => {
 
   // return requested file, or 404 if not found
   const filePath = path.join(__dirname, req.url);
-  fs.readFile(filePath, (err, data) => {
+  // remove query string
+  const filePathNoQuery = filePath.split("?")[0];
+
+  fs.readFile(filePathNoQuery, (err, data) => {
     if (err) {
       res.statusCode = 404;
       res.end("File not found");
     } else {
       res.statusCode = 200;
 
-      const extname = path.extname(filePath);
+      const extname = path.extname(filePathNoQuery);
       let contentType = "text/plain";
 
       switch (extname) {

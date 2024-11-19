@@ -3,7 +3,7 @@
   "version": "2.0.2",
   "description": "Transcribe speech to text in the browser.",
   "type": "module",
-  "browser": "./src/index.js",
+  "main": "./src/index.js",
   "types": "./index.d.ts",
   "peerDependencies": {
     "@transcribe/shout": "~1.0.3"

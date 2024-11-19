@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.0.3] - 2024-11-19
+
+### Add
+
+- script to update the version string (aka. cache busting) in the example files
+
+### Changed
+
+- explicit set wasm build environment to `web,webview,webworker`, this removes unused code for node.js (which is not supported by transcribe.js)
+
+### Fixed
+
+- module import with bundler (eg. SvelteKit); issue [#6](https://github.com/TranscribeJs/transcribe.js/issues/6)
+
 ## [2.0.2] - 2024-11-15
 
 ### Changed

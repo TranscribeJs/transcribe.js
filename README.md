@@ -4,6 +4,8 @@
 
 Transcribe speech to text in the browser. Based on a wasm build of [whisper.cpp](https://github.com/ggerganov/whisper.cpp).
 
+**Note:** This package is browser only. Node.js is not supported. (see this [discussion](https://github.com/TranscribeJs/transcribe.js/discussions/2) for details)
+
 - [Docs](https://transcribejs.dev)
 - [Example File Transcriber](https://examples.transcribejs.dev/examples/index.html)
 - [Example Stream Transcriber (experimental)](https://examples.transcribejs.dev/examples/stream.html)
