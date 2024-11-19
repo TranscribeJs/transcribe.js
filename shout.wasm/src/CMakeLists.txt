@@ -36,6 +36,7 @@ set_target_properties(${TARGET} PROPERTIES LINK_FLAGS " \
     -s FORCE_FILESYSTEM=1 \
     -s EXPORTED_RUNTIME_METHODS=\"['out', 'err', 'ccall', 'cwrap']\" \
     -s EXPORTED_FUNCTIONS=\"['_malloc', '_free']\" \
+    -s ENVIRONMENT='web,webview,worker' \
     -s EXPORT_ES6=1 \
     -s MODULARIZE=1 \
     -s EXPORT_NAME=\"createModule\" \
