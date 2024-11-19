@@ -12,6 +12,7 @@
     "wasm:copy-no-simd": "cp ./shout.wasm/em-build/bin/shout.wasm.js ./src/shout/shout.wasm_no-simd.js && cp ./shout.wasm/em-build/bin/shout.wasm.worker.mjs ./src/shout/shout.wasm.worker_no-simd.mjs",
     "copy-fft.js": "node ./scripts/fft.js-add-export.js",
     "generate-types": "npx -p typescript tsc src/*[^index].js --declaration --allowJs --emitDeclarationOnly --outDir src/types && node ./scripts/bundle-types.js && rm -rf src/types",
+    "update-example-versions": "node ./scripts/update-example-versions.js",
     "pack:transcriber": "node ./scripts/copy-transcriber-files-to-package.mjs",
     "pack:shout": "node ./scripts/copy-shout-files-to-package.mjs",
     "build": "npm run copy-fft.js && npm run generate-types && npm run wasm:build && npm run wasm:copy && npm run wasm:build-no-simd && npm run wasm:copy-no-simd && npm run pack:transcriber && npm run pack:shout",
