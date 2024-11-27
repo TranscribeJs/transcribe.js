@@ -94,14 +94,14 @@ export class StreamTranscriber extends Transcriber {
    * Get path to the audio worklet scripts (vad.js and buffer.js).
    *
    * @param {string} filename
-   * @param {import.meta} [meta]
+   * @param {URL|string} [baseUrl=import.meta.url]
    * @returns {string}
    */
-  getAudioWorkletPath(filename, meta = import.meta) {
+  getAudioWorkletPath(filename, baseUrl = import.meta?.url) {
     if (this._audioWorkletsPath) {
       return `${this._audioWorkletsPath}/${filename}`;
-    } else if (meta?.url) {
-      const url = new URL(`audio-worklets/${filename}`, meta.url);
+    } else if (baseUrl) {
+      const url = new URL(`audio-worklets/${filename}`, baseUrl);
       return url.href;
     } else {
       throw new Error("Cannot determine audio worklet path.");

@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.0.4] - 2024-11-27
+
+### Add
+
+- command to check generated types in packages `npm run check-types`
+
+### Changed
+
+- `StreamTranscriber.getAudioWorkletPath()` second parameter is now `URL|string` instead of `import.meta`
+
+### Fixed
+
+- Typescript compile error [#8](https://github.com/TranscribeJs/transcribe.js/issues/8)
+
 ## [2.0.3] - 2024-11-19
 
 ### Add
