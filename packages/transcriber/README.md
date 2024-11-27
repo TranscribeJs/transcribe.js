@@ -9,6 +9,7 @@ Transcribe speech to text in the browser. Based on a wasm build of [whisper.cpp]
 - [Docs](https://transcribejs.dev)
 - [Example File Transcriber](https://examples.transcribejs.dev/examples/index.html)
 - [Example Stream Transcriber (experimental)](https://examples.transcribejs.dev/examples/stream.html)
+- [Code Examples](https://github.com/TranscribeJs/examples)
 
 ## Packages
 
