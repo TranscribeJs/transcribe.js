@@ -71,12 +71,14 @@ describe("StreamTranscriber", () => {
       const transcriber = new StreamTranscriber({});
 
       // Act
-      const path = transcriber.getAudioWorkletPath("filename.js", {
-        url: "http://localhost/test/",
-      });
+      const path = transcriber.getAudioWorkletPath("filename.js");
 
       // Assert
-      expect(path).toBe("http://localhost/test/audio-worklets/filename.js");
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta#url
+      const expectedPath =
+        "file://" + process.cwd() + "/src/audio-worklets/filename.js";
+
+      expect(path).toBe(expectedPath);
 
       vi.unstubAllGlobals();
     });
@@ -86,8 +88,7 @@ describe("StreamTranscriber", () => {
       const transcriber = new StreamTranscriber({});
 
       // Act
-      const path = () =>
-        transcriber.getAudioWorkletPath("filename.js", { url: null });
+      const path = () => transcriber.getAudioWorkletPath("filename.js", null);
 
       // Assert
       expect(path).toThrowError("Cannot determine audio worklet path.");
