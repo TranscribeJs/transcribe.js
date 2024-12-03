@@ -217,9 +217,15 @@ npm run test:e2e-ui
 
 ## Credits
 
-Thank you to the creators and contributors of the following open source libraries that were used in this project:
+### People
+
+Many thanks to the people who supported this project, be it through code, ideas or general testing. I appreciate your time and effort.
+
+- [@MarketingPip](https://github.com/MarketingPip) - testing on older devices
 
 ### Libraries
+
+Also thank you to the creators and contributors of the following open source libraries that were used in this project:
 
 - **whisper.cpp**: A C++ implementation of whisper. [GitHub Repository](https://github.com/ggerganov/whisper.cpp)
 - **emscripten**: A toolchain for compiling C and C++ code to WebAssembly. [Official Site](https://emscripten.org/)
