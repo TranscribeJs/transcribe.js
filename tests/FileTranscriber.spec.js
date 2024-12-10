@@ -99,7 +99,7 @@ describe("FileTranscriber", () => {
       const transcriber = new FileTranscriber({ createModule, model });
       // Act & Assert
       await expect(transcriber.transcribe(new Float32Array())).rejects.toThrow(
-        "transcriber not initialized."
+        "FileTranscriber not initialized."
       );
     });
 
