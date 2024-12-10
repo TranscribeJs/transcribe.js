@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.0.5] -
+
+### Changed
+
+- `FileTranscriber.transcribe()` now only runs if wasm module _and_ model file are loaded successfully
+
+### Fixed
+
+- prevent multiple calls to `createModule` if model file was not found - fixes possible memory issue [#10](https://github.com/TranscribeJs/transcribe.js/issues/10)
+
 ## [2.0.4] - 2024-11-27
 
 ### Add

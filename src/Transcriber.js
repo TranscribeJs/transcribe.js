@@ -34,6 +34,14 @@ export class Transcriber {
   _isRuntimeInitialized = false;
 
   /**
+   * Is model file loaded.
+   *
+   * @protected
+   * @type {boolean}
+   */
+  _isModelFileLoaded = false;
+
+  /**
    * Is everything initialized and ready to transcribe.
    *
    * @protected
@@ -124,6 +132,15 @@ export class Transcriber {
   }
 
   /**
+   * Is model file loaded.
+   *
+   * @type {boolean}
+   */
+  get isModelFileLoaded() {
+    return this._isModelFileLoaded;
+  }
+
+  /**
    * True when ready to transcribe.
    *
    * @type {boolean}
@@ -136,13 +153,18 @@ export class Transcriber {
    * Load model and create a new shout instance.
    */
   async init() {
-    if (this.isRuntimeInitialized) {
-      console.log("shout already initialized.");
+    if (this.isRuntimeInitialized && this.isModelFileLoaded) {
+      console.log("Shout already initialized.");
       return;
     }
 
-    this.Module = await this._createModule(this.Module);
-    await this._loadModel();
+    if (!this.isRuntimeInitialized) {
+      this.Module = await this._createModule(this.Module);
+    }
+
+    if (!this.isModelFileLoaded) {
+      await this._loadModel();
+    }
   }
 
   /**
@@ -247,5 +269,7 @@ export class Transcriber {
       true,
       true
     );
+
+    this._isModelFileLoaded = true;
   }
 }
