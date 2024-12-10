@@ -32,6 +32,7 @@ describe("Transcriber", () => {
   });
 
   afterEach(() => {
+    createModule.mockClear();
     transcriber.destroy();
     vi.unstubAllGlobals();
   });
@@ -133,6 +134,23 @@ describe("Transcriber", () => {
       });
     });
 
+    it("should call createModule (create wasm runtime) only once", async () => {
+      await transcriber.init();
+      transcriber.Module.onRuntimeInitialized(); // fake call
+      transcriber._isModelFileLoaded = false; // fake
+
+      await transcriber.init();
+      expect(createModule).toHaveBeenCalledOnce();
+    });
+
+    it("should load model file only once", async () => {
+      await transcriber.init();
+      transcriber._isModelFileLoaded = true; // fake
+      await transcriber.init();
+
+      expect(window.fetch).toHaveBeenCalledOnce();
+    });
+
     it("should fetch model if model is a string", async () => {
       await transcriber.init();
       expect(window.fetch).toHaveBeenCalledWith("path/to/my-model.bin");
@@ -169,6 +187,18 @@ describe("Transcriber", () => {
         true,
         true
       );
+    });
+
+    it("should set isModelFileLoaded to true", async () => {
+      expect(transcriber.isModelFileLoaded).toBe(false);
+      await transcriber.init();
+      expect(transcriber.isModelFileLoaded).toBe(true);
+    });
+
+    it("should set isModelFileLoaded to false if model file is not loaded", async () => {
+      window.fetch = vi.fn(() => Promise.reject());
+      await expect(transcriber.init()).rejects.toThrowError();
+      expect(transcriber.isModelFileLoaded).toBe(false);
     });
   });
 
