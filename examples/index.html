@@ -90,6 +90,8 @@
                 segment.text + "\n";
             });
           } catch (error) {
+            printConsole(error.message);
+            document.querySelector(".result").innerHTML = "<em>Error</em>";
             console.error("Error transcribing", error);
           }
         }

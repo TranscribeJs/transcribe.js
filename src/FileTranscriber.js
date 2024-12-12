@@ -157,8 +157,8 @@ export class FileTranscriber extends Transcriber {
       token_timestamps = true,
     } = {}
   ) {
-    if (!this.isRuntimeInitialized) {
-      throw new Error("transcriber not initialized.");
+    if (!this.isReady) {
+      throw new Error("FileTranscriber not initialized.");
     }
 
     if (threads > this.maxThreads) {
