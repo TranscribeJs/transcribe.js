@@ -155,6 +155,8 @@ The `result` is an JSON object containg the text segements and timestamps.
 
 ## Development
 
+[Install Emscripten](https://emscripten.org/docs/getting_started/downloads.html) and its required tools.
+
 Clone the repository, install dependencies, start the dev server and open `http://localhost:9876/examples/index.html` in your browser.
 
 ```bash
