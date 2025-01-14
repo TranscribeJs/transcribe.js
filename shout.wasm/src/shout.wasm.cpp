@@ -351,7 +351,7 @@ int bind_cancel() {
 
 int bind_transcribe(const emscripten::val &audio, const std::string &lang,
                     int nthreads, bool translate, int max_len,
-                    bool split_on_word, bool suppress_non_speech_tokens,
+                    bool split_on_word, bool suppress_nst,
                     bool token_timestamps) {
 
   if (g_worker.joinable()) {
@@ -403,7 +403,7 @@ int bind_transcribe(const emscripten::val &audio, const std::string &lang,
   wparams.token_timestamps = token_timestamps;
   wparams.max_len = max_len;
   wparams.split_on_word = split_on_word;
-  wparams.suppress_non_speech_tokens = suppress_non_speech_tokens;
+  wparams.suppress_nst = suppress_nst;
 
   // audio data
   std::vector<float> pcmf32;
@@ -435,12 +435,11 @@ int bind_transcribe(const emscripten::val &audio, const std::string &lang,
 
     printf("%s: processing %d samples, %.1f sec, %d threads, %d processors, "
            "lang = %s, task = %s, max_len=%i, split_on_word=%d, "
-           "suppress_non_speech_tokens=%d ...\n",
+           "suppress_nst=%d ...\n",
            __func__, int(pcmf32.size()),
            float(pcmf32.size()) / WHISPER_SAMPLE_RATE, wparams.n_threads, 1,
            wparams.language, wparams.translate ? "translate" : "transcribe",
-           wparams.max_len, wparams.split_on_word,
-           wparams.suppress_non_speech_tokens);
+           wparams.max_len, wparams.split_on_word, wparams.suppress_nst);
 
     printf("\n");
   }
@@ -474,8 +473,7 @@ int bind_transcribe(const emscripten::val &audio, const std::string &lang,
 }
 
 void stream_main(const std::string &lang, int nthreads, bool translate,
-                 int max_tokens, int audio_ctx,
-                 bool suppress_non_speech_tokens) {
+                 int max_tokens, int audio_ctx, bool suppress_nst) {
   stream_set_status("loading");
 
   struct whisper_full_params wparams = whisper_full_default_params(
@@ -503,7 +501,7 @@ void stream_main(const std::string &lang, int nthreads, bool translate,
   wparams.prompt_n_tokens = 0;
 
   wparams.language = lang.c_str();
-  wparams.suppress_non_speech_tokens = suppress_non_speech_tokens;
+  wparams.suppress_nst = suppress_nst;
 
   printf("stream: using %d threads\n", wparams.n_threads);
 
@@ -572,7 +570,7 @@ void stream_main(const std::string &lang, int nthreads, bool translate,
 void bind_start_stream(const std::string &model, const std::string &lang,
                        int nthreads = 16, bool translate = false,
                        int max_tokens = 32, int audio_ctx = 512,
-                       bool suppress_non_speech_tokens = false) {
+                       bool suppress_nst = false) {
   if (g_stream_context == nullptr) {
     struct whisper_context_params cparams = whisper_context_default_params();
     g_stream_context =
@@ -584,11 +582,11 @@ void bind_start_stream(const std::string &model, const std::string &lang,
       if (g_stream_worker.joinable()) {
         g_stream_worker.join();
       }
-      g_stream_worker = std::thread([lang, nthreads, translate, max_tokens,
-                                     audio_ctx, suppress_non_speech_tokens]() {
-        stream_main(lang, nthreads, translate, max_tokens, audio_ctx,
-                    suppress_non_speech_tokens);
-      });
+      g_stream_worker = std::thread(
+          [lang, nthreads, translate, max_tokens, audio_ctx, suppress_nst]() {
+            stream_main(lang, nthreads, translate, max_tokens, audio_ctx,
+                        suppress_nst);
+          });
     }
 
     whisper_free_context_params(&cparams);
