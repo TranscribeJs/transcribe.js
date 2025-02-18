@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.0.6] - 2024-02-18
+
+### Add
+
+- add params and explanation for `preRecordMs`, `maxRecordMs`, `minSilenceMs` in stream example
+
+### Changed
+
+- updated whisper.cpp to v1.7.4
+- add integration guide links and updated install instructions in readme
+- changed `StreamTranscriber.transcribe` default params for better results
+
 ## [2.0.5] - 2024-12-12
 
 ### Changed

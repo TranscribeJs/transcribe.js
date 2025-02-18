@@ -41,7 +41,13 @@ You need a ggml model file to run Transcribe.js. You can download them on huggin
 
 ## Installation
 
-### NPM
+[Svelte](https://transcribejs.dev/docs/svelte)  
+[SvelteKit](https://transcribejs.dev/docs/svelte-kit)  
+[Vue](https://transcribejs.dev/docs/vue)  
+[Angular](https://transcribejs.dev/docs/angular)  
+[Other](https://transcribejs.dev/docs/integration-other)
+
+### NPM (without bundler)
 
 Install shout wasm and transcriber packages
 
@@ -49,7 +55,7 @@ Install shout wasm and transcriber packages
 npm install --save @transcribe/transcriber
 ```
 
-copy the shout.wasm and webworker files to your project directory
+The `shout.wasm` files must be accessable and served by your webserver. Depending on your project setup you may need to copy them from `node_modules` to your public directory.
 
 ```bash
 # copy shout wasm
@@ -94,15 +100,15 @@ You can use Transcribe.js without a bundler or package manager. Download the fil
 For full code examples and advanced usage please see https://www.transcribejs.dev or check out the [File Transcriber Example](https://examples.transcribejs.dev/examples/index.html).
 
 ```js
-import createModule from "/your/project/shout.wasm.js"; // path where you've copied before
-// import createModule from "@transcribe/shout";  // if you use an import map
+import createModule from "@transcribe/shout"; // if you use import map or bundler like vite
+// import createModule from "/your/project/shout.wasm.js"; // you can also exclude @transcibe/shout from your bundler and import manually
 import { FileTranscriber } from "@transcribe/transcriber";
 
 // create new instance
 const transcriber = new FileTranscriber({
   createModule, // create module function from emscripten build
   model: "/your/project/ggml-tiny-q5_1.bin", // path to ggml model file
-  workerPath: "/your/project", // directory of shout.wasm.worker.mjs copied before
+  // workerPath: "/your/project", // only set if you don't use a bundler; directory of shout.wasm.worker.mjs copied before
 });
 
 // init wasm transcriber worker
@@ -185,7 +191,7 @@ cd shout.wasm/whisper.cpp
 git pull origin master
 ```
 
-The wasm files are build from `shout.wasm/src/whisper.wasm.cpp`. If you want to add new functions from whisper.cpp to the wasm build this is the file to add them.
+The wasm files are build from `shout.wasm/src/shout.wasm.cpp`. If you want to add new functions from whisper.cpp to the wasm build this is the file to add them.
 
 > I'm pretty sure that this will not compile on every machine/architecture, but I'm no expert in C++. If you know how to optimize the build process please let me know or create a pull request. Maybe this should be dockerized.?
 
