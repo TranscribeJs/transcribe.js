@@ -216,9 +216,9 @@ export class StreamTranscriber extends Transcriber {
   async transcribe(
     stream,
     {
-      preRecordMs = 200,
-      maxRecordMs = 5000,
-      minSilenceMs = 500,
+      preRecordMs = 1000,
+      maxRecordMs = 10000,
+      minSilenceMs = 700,
       onVoiceActivity = null,
     } = {}
   ) {

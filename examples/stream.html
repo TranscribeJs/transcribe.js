@@ -103,7 +103,12 @@
             .getUserMedia({ audio: true, video: false })
             .then((stream) => {
               // transcribe the audio stream
-              transcriber.transcribe(stream, { onVoiceActivity });
+              transcriber.transcribe(stream, {
+                preRecordMs: 1000, // add 1s before actual speech got detected
+                maxRecordMs: 10000, // force transcribe after 10s
+                minSilenceMs: 700, // min time of silence before transcribe
+                onVoiceActivity,
+              });
             });
         }
 
