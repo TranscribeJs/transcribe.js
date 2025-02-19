@@ -22,9 +22,15 @@
       (async function () {
         // feature detect simd support
         // only if you need to support browsers/devices without simd support
-        const createModule = (await simd())
-          ? createModuleSimd
-          : createModuleNoSimd;
+        const simdSupported = await simd();
+
+        if (simdSupported) {
+          console.log("SIMD supported");
+          var createModule = createModuleSimd;
+        } else {
+          console.log("SIMD not supported");
+          var createModule = createModuleNoSimd;
+        }
 
         // Preload model
         const path = location.pathname.replace(/\/[^/]+$/, "");

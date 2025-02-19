@@ -23,8 +23,8 @@ if (WHISPER_WASM_SINGLE_FILE)
 endif()
 
 if (NO_SIMD)
-    # remove -msimd128 set in whisper.cpp/ggml/src/CMakeList.txt to disable SIMD
-    set_target_properties(ggml PROPERTIES COMPILE_FLAGS "")
+    # remove -msimd128 set in whisper.cpp/ggml/src/ggml-cpu/CMakeList.txt:344 to disable SIMD
+    set_target_properties(ggml-cpu PROPERTIES COMPILE_FLAGS "")
 endif()
 
 set_target_properties(${TARGET} PROPERTIES LINK_FLAGS " \
