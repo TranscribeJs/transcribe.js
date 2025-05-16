@@ -15,10 +15,10 @@ Transcribe speech to text in the browser. Based on a wasm build of [whisper.cpp]
 
 All packages are under [@transcribe](https://www.npmjs.com/search?q=%40transcribe) namespace.
 
-| Package                     | Description                                                                                                                                                |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **@transcribe/shout**       | Wasm build based on [whisper.cpp](https://github.com/ggerganov/whisper.cpp). Contains Module file including the wasm binary and a separate webworker file. |
-| **@transcribe/transcriber** | `FileTranscriber` and `StreamTranscriber` for transcribing media files or streams.                                                                         |
+| Package                     | Description                                                                                                                                 |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **@transcribe/shout**       | Wasm build based off [whisper.cpp](https://github.com/ggerganov/whisper.cpp). `shout.wasm.js` contains the wasm binary and the worker file. |
+| **@transcribe/transcriber** | `FileTranscriber` and `StreamTranscriber` for transcribing media files or streams.                                                          |
 
 ## Prerequisite
 
@@ -59,11 +59,9 @@ The `shout.wasm` files must be accessable and served by your webserver. Dependin
 
 ```bash
 # copy shout wasm
-cp node_modules/@transcribe/shout/src/shout/shout.wasm.worker.mjs /your/project
 cp node_modules/@transcribe/shout/src/shout/shout.wasm.js /your/project
 
 # optional: copy no-simd build
-cp node_modules/@transcribe/shout/src/shout/shout.wasm.worker_no-simd.mjs /your/project
 cp node_modules/@transcribe/shout/src/shout/shout.wasm_no-simd.js /your/project
 
 # optional: copy audio-worklets, only needed if you want to use StreamTranscriber
@@ -108,7 +106,6 @@ import { FileTranscriber } from "@transcribe/transcriber";
 const transcriber = new FileTranscriber({
   createModule, // create module function from emscripten build
   model: "/your/project/ggml-tiny-q5_1.bin", // path to ggml model file
-  // workerPath: "/your/project", // only set if you don't use a bundler; directory of shout.wasm.worker.mjs copied before
 });
 
 // init wasm transcriber worker
