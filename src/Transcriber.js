@@ -75,13 +75,6 @@ export class Transcriber {
     this.Module.onRuntimeInitialized = () => {
       this._isRuntimeInitialized = true;
     };
-
-    if (options.locateFile) {
-      this.Module.locateFile = options.locateFile;
-    } else if (options.workerPath) {
-      const path = options.workerPath.trim().replace(/\/$/, "");
-      this.Module.locateFile = (file) => `${path}/${file}`;
-    }
   }
 
   /**
