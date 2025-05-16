@@ -7,9 +7,9 @@
   },
   "scripts": {
     "wasm:build": "cd ./shout.wasm/em-build && emcmake cmake -DNO_SIMD=OFF .. && make -j",
-    "wasm:copy": "cp ./shout.wasm/em-build/bin/shout.wasm.js ./src/shout/ && cp ./shout.wasm/em-build/bin/shout.wasm.worker.mjs ./src/shout/",
+    "wasm:copy": "cp ./shout.wasm/em-build/bin/shout.wasm.js ./src/shout/",
     "wasm:build-no-simd": "cd ./shout.wasm/em-build && emcmake cmake -DNO_SIMD=ON .. && make -j",
-    "wasm:copy-no-simd": "cp ./shout.wasm/em-build/bin/shout.wasm.js ./src/shout/shout.wasm_no-simd.js && cp ./shout.wasm/em-build/bin/shout.wasm.worker.mjs ./src/shout/shout.wasm.worker_no-simd.mjs",
+    "wasm:copy-no-simd": "cp ./shout.wasm/em-build/bin/shout.wasm.js ./src/shout/shout.wasm_no-simd.js",
     "copy-fft.js": "node ./scripts/fft.js-add-export.js",
     "generate-types": "npx -p typescript tsc src/*[^index].js --declaration --allowJs --emitDeclarationOnly --outDir src/types && node ./scripts/bundle-types.js && rm -rf src/types",
     "check-types": "npx -p typescript tsc --noEmit ./packages/**/*.ts",
