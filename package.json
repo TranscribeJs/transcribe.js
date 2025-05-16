@@ -18,7 +18,7 @@
     "pack:shout": "node ./scripts/copy-shout-files-to-package.mjs",
     "build": "npm run copy-fft.js && npm run generate-types && npm run wasm:build && npm run wasm:copy && npm run wasm:build-no-simd && npm run wasm:copy-no-simd && npm run pack:transcriber && npm run pack:shout",
     "dev": "node ./dev-server.js",
-    "test:unit": "vitest",
+    "test:unit": "vitest --silent",
     "test:e2e": "npx playwright test",
     "test:e2e-ui": "npx playwright test --ui",
     "test:e2e-browserstack": "npx browserstack-node-sdk playwright test"
