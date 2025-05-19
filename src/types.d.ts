@@ -103,12 +103,6 @@ export type TranscriberOptions = {
   model: string | File;
 
   /**
-   * Path to shout.wasm.worker.mjs file.
-   * If not set, uses the same directory as shout.wasm.js.
-   */
-  workerPath?: string;
-
-  /**
    * Called on wasm print to stdout.
    *
    * @param {string} message
@@ -129,9 +123,6 @@ export type TranscriberOptions = {
   onAbort?: () => void;
 
   onExit?: (exitStatus: ExitStatus) => void;
-
-  /** Used by shout.wasm.js to locate worker.js */
-  locateFile?: (file: string) => string;
 };
 
 export type FileTranscriberOptions = TranscriberOptions & {

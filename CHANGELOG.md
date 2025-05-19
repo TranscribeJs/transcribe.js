@@ -1,6 +1,23 @@
 # Changelog
 
-## [2.0.6] - 2024-02-18
+## [3.0.0] - 2025-05-16
+
+### Breaking
+
+- removed `workerPath` & `locateFile` because there is no separate worker file anymore
+  - this is only a breaking changed if you've used these options to locate the separate worker file
+
+### Changed
+
+- updated whisper.cpp to v1.7.5
+- updated dev dependencies
+- disable console.log output in vitest (`npm run test:unit`)
+
+## Fixed
+
+- build with latest emscripten version to fix `Vite is unable to parse the worker options`; issue [#14](https://github.com/TranscribeJs/transcribe.js/issues/14)
+
+## [2.0.6] - 2025-02-18
 
 ### Add
 

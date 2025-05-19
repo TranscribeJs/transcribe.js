@@ -33,7 +33,7 @@ describe("utils", () => {
     it("should return null if an error occurs during audio decoding", async () => {
       // Arrange
       const AudioContextStub = vi.fn(() => ({
-        decodeAudioData: vi.fn().mockRejectedValue(new Error("Decoding error")),
+        decodeAudioData: vi.fn().mockRejectedValue("Decoding error"),
       }));
 
       vi.stubGlobal("AudioContext", AudioContextStub);
@@ -46,7 +46,13 @@ describe("utils", () => {
 
     it("create an AudioContext with the specified sample rate", async () => {
       // Arrange
-      const AudioContextStub = vi.fn();
+      const AudioContextStub = vi.fn().mockImplementation(() => ({
+        decodeAudioData: vi.fn().mockResolvedValue({
+          numberOfChannels: 1,
+          getChannelData: vi.fn().mockReturnValue(new Float32Array([1, 2, 3])),
+        }),
+      }));
+
       vi.stubGlobal("AudioContext", AudioContextStub);
 
       // Act

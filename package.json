@@ -7,9 +7,9 @@
   },
   "scripts": {
     "wasm:build": "cd ./shout.wasm/em-build && emcmake cmake -DNO_SIMD=OFF .. && make -j",
-    "wasm:copy": "cp ./shout.wasm/em-build/bin/shout.wasm.js ./src/shout/ && cp ./shout.wasm/em-build/bin/shout.wasm.worker.mjs ./src/shout/",
+    "wasm:copy": "cp ./shout.wasm/em-build/bin/shout.wasm.js ./src/shout/",
     "wasm:build-no-simd": "cd ./shout.wasm/em-build && emcmake cmake -DNO_SIMD=ON .. && make -j",
-    "wasm:copy-no-simd": "cp ./shout.wasm/em-build/bin/shout.wasm.js ./src/shout/shout.wasm_no-simd.js && cp ./shout.wasm/em-build/bin/shout.wasm.worker.mjs ./src/shout/shout.wasm.worker_no-simd.mjs",
+    "wasm:copy-no-simd": "cp ./shout.wasm/em-build/bin/shout.wasm.js ./src/shout/shout.wasm_no-simd.js",
     "copy-fft.js": "node ./scripts/fft.js-add-export.js",
     "generate-types": "npx -p typescript tsc src/*[^index].js --declaration --allowJs --emitDeclarationOnly --outDir src/types && node ./scripts/bundle-types.js && rm -rf src/types",
     "check-types": "npx -p typescript tsc --noEmit ./packages/**/*.ts",
@@ -18,7 +18,7 @@
     "pack:shout": "node ./scripts/copy-shout-files-to-package.mjs",
     "build": "npm run copy-fft.js && npm run generate-types && npm run wasm:build && npm run wasm:copy && npm run wasm:build-no-simd && npm run wasm:copy-no-simd && npm run pack:transcriber && npm run pack:shout",
     "dev": "node ./dev-server.js",
-    "test:unit": "vitest",
+    "test:unit": "vitest --silent",
     "test:e2e": "npx playwright test",
     "test:e2e-ui": "npx playwright test --ui",
     "test:e2e-browserstack": "npx browserstack-node-sdk playwright test"
@@ -26,12 +26,12 @@
   "author": "thurti",
   "license": "MIT",
   "devDependencies": {
-    "@playwright/test": "^1.49.1",
-    "@types/node": "^22.10.2",
-    "browserstack-node-sdk": "^1.34.29",
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^22.15.18",
+    "browserstack-node-sdk": "^1.35.6",
     "fft.js": "^4.0.4",
-    "globby": "^14.0.2",
-    "jsdom": "^25.0.1",
-    "vitest": "^2.1.8"
+    "globby": "^14.1.0",
+    "jsdom": "^26.1.0",
+    "vitest": "^3.1.3"
   }
 }

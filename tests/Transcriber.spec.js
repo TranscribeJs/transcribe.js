@@ -54,24 +54,6 @@ describe("Transcriber", () => {
     it("should set the isRuntimeInitialized property to false", () => {
       expect(transcriber.isRuntimeInitialized).toBe(false);
     });
-
-    it("should set locateFile function", () => {
-      const locateFile = vi.fn();
-      const transcriber = new Transcriber({
-        locateFile,
-      });
-
-      transcriber.Module.locateFile();
-      expect(locateFile).toHaveBeenCalled();
-    });
-
-    it("should set locateFile function with workerPath", () => {
-      const transcriber = new Transcriber({
-        workerPath: "path/to/worker/",
-      });
-
-      expect(transcriber.Module.locateFile("file")).toBe("path/to/worker/file");
-    });
   });
 
   describe("maxThreads", () => {

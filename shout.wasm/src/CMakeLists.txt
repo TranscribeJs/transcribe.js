@@ -34,7 +34,7 @@ set_target_properties(${TARGET} PROPERTIES LINK_FLAGS " \
     -s INITIAL_MEMORY=512MB \
     -s ALLOW_MEMORY_GROWTH=1 \
     -s FORCE_FILESYSTEM=1 \
-    -s EXPORTED_RUNTIME_METHODS=\"['out', 'err', 'ccall', 'cwrap']\" \
+    -s EXPORTED_RUNTIME_METHODS=\"['out', 'err', 'ccall', 'cwrap', 'HEAPU8']\" \
     -s EXPORTED_FUNCTIONS=\"['_malloc', '_free']\" \
     -s ENVIRONMENT='web,webview,worker' \
     -s EXPORT_ES6=1 \
