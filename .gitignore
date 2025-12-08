@@ -12,3 +12,4 @@ node_modules/
 /packages/shout/src/**/*
 !.gitkeep
 deploy-example-files.sh
+/log/
