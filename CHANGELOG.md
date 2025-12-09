@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.0.1] - 2025-12-08
+
+### Fixed
+
+- compatibility in privileged environments, eg. Chrome extension issue [#18](https://github.com/TranscribeJs/transcribe.js/issues/18)
+
+### Changed
+
+- Refactored WASM C++ bindings to remove all uses of `eval`/`emscripten_run_script` for compatibility with `DYNAMIC_EXECUTION=0` (CSP/Lockdown mode safe)
+- updated whisper.cpp to v1.8.2
+- updated dev dependencies
+- removed old (now unused) worker files
+
 ## [3.0.0] - 2025-05-16
 
 ### Breaking

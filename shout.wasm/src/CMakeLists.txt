@@ -40,5 +40,6 @@ set_target_properties(${TARGET} PROPERTIES LINK_FLAGS " \
     -s EXPORT_ES6=1 \
     -s MODULARIZE=1 \
     -s EXPORT_NAME=\"createModule\" \
+    -s DYNAMIC_EXECUTION=0 \
     ${EXTRA_FLAGS} \
     ")

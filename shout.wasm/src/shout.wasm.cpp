@@ -211,31 +211,40 @@ std::string to_output_json(struct whisper_context *ctx, const int n_segment_0,
 
 template <typename... Args>
 void call_handler(const std::string &handler, Args... args) {
-  std::vector<CallHandlerArg> argsVector = {args...};
-
-  std::stringstream script;
-  script << "postMessage({cmd: \"callHandler\", handler: \"" << handler
-         << "\", args: [";
-
-  for (size_t i = 0; i < argsVector.size(); ++i) {
-    if (i != 0)
-      script << ", ";
-
-    std::visit(
-        [&](auto &&arg) {
-          using T = std::decay_t<decltype(arg)>;
-          if constexpr (std::is_same_v<T, std::string>)
-            script << (isJson(arg) ? arg : "\"" + arg + "\"");
-          else
-            script << arg;
-        },
-        argsVector[i]);
+  emscripten::val global = emscripten::val::global("self");
+  if (global["postMessage"].isUndefined()) {
+    return;
   }
 
-  script << "]})";
+  emscripten::val message = emscripten::val::object();
+  message.set("cmd", "callHandler");
+  message.set("handler", handler);
 
-  emscripten_run_script(script.str().c_str());
-  fflush(stdout);
+  emscripten::val argsArray = emscripten::val::array();
+  std::vector<CallHandlerArg> argsVector = {args...};
+
+  for (const auto &arg : argsVector) {
+    std::visit(
+        [&](auto &&val) {
+          using T = std::decay_t<decltype(val)>;
+          if constexpr (std::is_same_v<T, std::string>) {
+            if (isJson(val)) {
+              // Parse JSON string to object
+              emscripten::val JSON = emscripten::val::global("JSON");
+              argsArray.call<void>("push",
+                                   JSON.call<emscripten::val>("parse", val));
+            } else {
+              argsArray.call<void>("push", val);
+            }
+          } else {
+            argsArray.call<void>("push", val);
+          }
+        },
+        arg);
+  }
+
+  message.set("args", argsArray);
+  global.call<void>("postMessage", message);
 }
 
 void stream_set_status(const std::string &status) {
