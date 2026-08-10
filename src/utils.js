@@ -40,7 +40,7 @@ export async function downmixAudioBufferToMono(buffer) {
   const downmixContext = new OfflineAudioContext(
     1,
     buffer.length,
-    buffer.sampleRate
+    buffer.sampleRate,
   );
 
   const bufferSource = new AudioBufferSourceNode(downmixContext, { buffer });
@@ -48,6 +48,28 @@ export async function downmixAudioBufferToMono(buffer) {
   bufferSource.connect(downmixContext.destination);
 
   return await downmixContext.startRendering();
+}
+
+/**
+ * Check if browser supports WebGPU and shader-f16 feature (needed by the WebGPU WASM build).
+ *
+ * @returns {Promise<boolean>}
+ */
+export async function isWebGPUSupported() {
+  if (typeof navigator === "undefined" || !navigator.gpu) {
+    return false;
+  }
+
+  if (isFirefox()) {
+    return false;
+  }
+
+  try {
+    const adapter = await navigator.gpu.requestAdapter();
+    return adapter !== null && adapter.features.has("shader-f16");
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -81,7 +103,7 @@ export function createVad(audioContext, onSpeech, onSilence, minSilence = 100) {
     });
   } catch (error) {
     console.warn(
-      "You've propably forgot to add the vad.js file to the audio context or used a wrong path (must be absolute). Please call audioContext.addModule('vad.js') before creating the node."
+      "You've propably forgot to add the vad.js file to the audio context or used a wrong path (must be absolute). Please call audioContext.addModule('vad.js') before creating the node.",
     );
     console.log(error);
     return null;
@@ -139,7 +161,7 @@ export function createBuffer(audioContext, onBuffer, bufferSizeMs = 100) {
     });
   } catch (error) {
     console.warn(
-      "You've propably forgot to add the buffer.js file to the audio context or used a wrong path (must be absolute). Please call audioContext.addModule('buffer.js') before creating the node."
+      "You've propably forgot to add the buffer.js file to the audio context or used a wrong path (must be absolute). Please call audioContext.addModule('buffer.js') before creating the node.",
     );
     console.log(error);
     return null;

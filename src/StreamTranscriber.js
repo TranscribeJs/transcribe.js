@@ -127,10 +127,10 @@ export class StreamTranscriber extends Transcriber {
 
     await this._streamAudioContext.suspend();
     await this._streamAudioContext.audioWorklet.addModule(
-      this.getAudioWorkletPath("vad.js")
+      this.getAudioWorkletPath("vad.js"),
     );
     await this._streamAudioContext.audioWorklet.addModule(
-      this.getAudioWorkletPath("buffer.js")
+      this.getAudioWorkletPath("buffer.js"),
     );
 
     this._onReady();
@@ -164,7 +164,7 @@ export class StreamTranscriber extends Transcriber {
 
     if (threads > this.maxThreads) {
       console.warn(
-        `Number of threads (${threads}) exceeds hardware concurrency (${this.maxThreads}).`
+        `Number of threads (${threads}) exceeds hardware concurrency (${this.maxThreads}).`,
       );
     }
 
@@ -172,14 +172,17 @@ export class StreamTranscriber extends Transcriber {
     threads = threads - 1 > 0 ? threads - 1 : 1;
     await this._streamAudioContext.resume();
 
-    this.Module.startStream(
-      this.modelInternalFilename,
-      lang,
-      threads,
-      translate,
-      max_tokens,
-      audio_ctx,
-      suppress_non_speech
+    // Module.startStream() may return a Promise when the WebGPU build
+    await Promise.resolve(
+      this.Module.startStream(
+        this.modelInternalFilename,
+        lang,
+        threads,
+        translate,
+        max_tokens,
+        audio_ctx,
+        suppress_non_speech,
+      ),
     );
 
     this._isStreamRunning = true;
@@ -220,7 +223,7 @@ export class StreamTranscriber extends Transcriber {
       maxRecordMs = 10000,
       minSilenceMs = 700,
       onVoiceActivity = null,
-    } = {}
+    } = {},
   ) {
     if (!this.isStreamRunning) {
       console.log("Stream not running.");
@@ -275,7 +278,7 @@ export class StreamTranscriber extends Transcriber {
       const buffer = createBuffer(
         this._streamAudioContext,
         onBuffer.bind(this),
-        100 // buffer size in ms
+        100, // buffer size in ms
       );
 
       this._streamMediaSource.connect(buffer);
@@ -295,7 +298,7 @@ export class StreamTranscriber extends Transcriber {
         this._streamAudioContext,
         onSpeech,
         onSilence,
-        minSilenceMs
+        minSilenceMs,
       );
       this._streamMediaSource.connect(vad);
     } catch (error) {

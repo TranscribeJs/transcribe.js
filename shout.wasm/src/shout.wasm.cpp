@@ -211,15 +211,6 @@ std::string to_output_json(struct whisper_context *ctx, const int n_segment_0,
 
 template <typename... Args>
 void call_handler(const std::string &handler, Args... args) {
-  emscripten::val global = emscripten::val::global("self");
-  if (global["postMessage"].isUndefined()) {
-    return;
-  }
-
-  emscripten::val message = emscripten::val::object();
-  message.set("cmd", "callHandler");
-  message.set("handler", handler);
-
   emscripten::val argsArray = emscripten::val::array();
   std::vector<CallHandlerArg> argsVector = {args...};
 
@@ -243,8 +234,32 @@ void call_handler(const std::string &handler, Args... args) {
         arg);
   }
 
+#ifdef SHOUT_USE_WEBGPU
+  // The WebGPU build runs whisper_full inline on the main thread (GPU objects
+  // cannot cross pthread boundaries), so the postMessage -> worker.onmessage ->
+  // Module[handler] round-trip used by the pthread build does not exist here:
+  // `self` is `window`, and a message posted to it has no listener. Invoke the
+  // handler on the Module object directly instead.
+  emscripten::val handlerFn = emscripten::val::module_property(handler.c_str());
+
+  if (handlerFn.isUndefined() || handlerFn.isNull()) {
+    printf("call_handler: Module.%s is not defined\n", handler.c_str());
+    return;
+  }
+
+  handlerFn.call<void>("apply", emscripten::val::null(), argsArray);
+#else
+  emscripten::val global = emscripten::val::global("self");
+  if (global["postMessage"].isUndefined()) {
+    return;
+  }
+
+  emscripten::val message = emscripten::val::object();
+  message.set("cmd", "callHandler");
+  message.set("handler", handler);
   message.set("args", argsArray);
   global.call<void>("postMessage", message);
+#endif
 }
 
 void stream_set_status(const std::string &status) {
@@ -310,7 +325,11 @@ void bind_init(const std::string &path_model, const std::string &dtw) {
 
   if (g_context == nullptr) {
     struct whisper_context_params cparams = whisper_context_default_params();
+#ifdef SHOUT_USE_WEBGPU
+    cparams.use_gpu = true;
+#else
     cparams.use_gpu = false;
+#endif
 
     if (dtw == "tiny" || dtw == "tiny.en" || dtw == "base" ||
         dtw == "base.en" || dtw == "small" || dtw == "small.en") {
@@ -454,6 +473,46 @@ int bind_transcribe(const emscripten::val &audio, const std::string &lang,
   }
 
   // run the worker
+#ifdef SHOUT_USE_WEBGPU
+  // WebGPU JS objects live on the thread that created the device and cannot be
+  // accessed from a pthread. Run whisper_full directly here (no new thread).
+  // ASYNCIFY suspends the call stack during GPU waits so the browser stays
+  // responsive. bind_cancel() can still be called during those suspensions.
+  {
+    // Force single-threaded CPU ops: spawning pthreads from inside an Asyncify
+    // context can cause missed Atomics.notify signals on the main WASM thread.
+    // The GPU backend handles the heavy compute, so a single CPU thread is fine.
+    wparams.n_threads = 1;
+
+    is_running = true;
+
+    printf("running whisper_full ...\n");
+    whisper_full(g_context, wparams, pcmf32.data(), pcmf32.size());
+    printf("running whisper_full done\n");
+
+    const int n_segments = whisper_full_n_segments(g_context);
+    std::string result = to_output_json(g_context, 0, n_segments);
+
+    printf("n_segments = %d\n", n_segments);
+
+    for (int i = 0; i < n_segments; ++i) {
+      printf("  segment %d: [%lld -> %lld] '%s'\n", i,
+             (long long) whisper_full_get_segment_t0(g_context, i),
+             (long long) whisper_full_get_segment_t1(g_context, i),
+             whisper_full_get_segment_text(g_context, i));
+    }
+
+    if (!abort_flag) {
+      printf("call onTranscribed (%zu bytes)\n", result.size());
+      call_handler("onTranscribed", result);
+    } else {
+      printf("call onCanceled\n");
+      call_handler("onCanceled");
+    }
+
+    is_running = false;
+  }
+#else
   {
     g_worker = std::thread(
         [wparams = std::move(wparams), pcmf32 = std::move(pcmf32)]() {
@@ -477,6 +536,7 @@ int bind_transcribe(const emscripten::val &audio, const std::string &lang,
           is_running = false;
         });
   }
+#endif
 
   return 0;
 }
@@ -575,6 +635,104 @@ void stream_main(const std::string &lang, int nthreads, bool translate,
   call_handler("onStreamStatus", "stopped");
 }
 
+#ifdef SHOUT_USE_WEBGPU
+// WebGPU device/queue objects live on the thread that created them (see the
+// comment in bind_transcribe), so the stream loop cannot run on a pthread
+// like it does in the CPU build. Instead it runs as a self-rescheduling
+// main-thread tick: each tick returns to the JS event loop between chunks so
+// setStreamAudio()/stopStream() calls (and the browser) stay responsive, and
+// Asyncify suspends/resumes the call stack around the GPU waits inside
+// whisper_full(), same as the inline path in bind_transcribe.
+struct whisper_full_params g_stream_wparams;
+std::string g_stream_lang;
+
+void stream_webgpu_tick(void *arg) {
+  (void)arg;
+
+  if (!g_stream_running) {
+    whisper_free(g_stream_context);
+    g_stream_context = nullptr;
+    call_handler("onStreamStatus", "stopped");
+    return;
+  }
+
+  std::vector<float> pcmf32;
+
+  {
+    std::lock_guard<std::mutex> lock(g_mutex);
+
+    if (g_pcmf32.size() < 1024) {
+      pcmf32.clear();
+    } else {
+      pcmf32 = g_pcmf32;
+      g_pcmf32.clear();
+    }
+  }
+
+  if (pcmf32.empty()) {
+    stream_set_status("waiting");
+    emscripten_async_call(stream_webgpu_tick, nullptr, 10);
+    return;
+  }
+
+  stream_set_status("processing");
+
+  int ret = whisper_full(g_stream_context, g_stream_wparams, pcmf32.data(),
+                         pcmf32.size());
+  if (ret != 0) {
+    printf("whisper_full() failed: %d\n", ret);
+  } else {
+    const int n_segments = whisper_full_n_segments(g_stream_context);
+    if (n_segments > 0) {
+      const std::string result_json =
+          to_output_json(g_stream_context, 0, n_segments, true);
+      call_handler("onStreamTranscription", result_json);
+    }
+  }
+
+  emscripten_async_call(stream_webgpu_tick, nullptr, 0);
+}
+
+void stream_webgpu_start(const std::string &lang, int nthreads,
+                         bool translate, int max_tokens, int audio_ctx,
+                         bool suppress_nst) {
+  stream_set_status("loading");
+
+  g_stream_lang = lang;
+
+  g_stream_wparams = whisper_full_default_params(
+      whisper_sampling_strategy::WHISPER_SAMPLING_GREEDY);
+
+  // GPU compute happens on the main thread's Asyncify call stack; spawning
+  // extra CPU threads here offers no benefit and risks missed Atomics
+  // signals, same reasoning as the single-shot transcribe path.
+  g_stream_wparams.n_threads = 1;
+  g_stream_wparams.offset_ms = 0;
+  g_stream_wparams.translate = translate;
+  g_stream_wparams.no_context = true;
+  g_stream_wparams.single_segment = true;
+  g_stream_wparams.print_realtime = false;
+  g_stream_wparams.print_progress = false;
+  g_stream_wparams.print_timestamps = false;
+  g_stream_wparams.print_special = false;
+  g_stream_wparams.no_timestamps = true;
+
+  g_stream_wparams.max_tokens = max_tokens;
+  g_stream_wparams.audio_ctx = audio_ctx;
+
+  g_stream_wparams.temperature_inc = 0.0f;
+  g_stream_wparams.prompt_tokens = nullptr;
+  g_stream_wparams.prompt_n_tokens = 0;
+
+  g_stream_wparams.language = g_stream_lang.c_str();
+  g_stream_wparams.suppress_nst = suppress_nst;
+
+  printf("stream: using %d threads\n", g_stream_wparams.n_threads);
+
+  emscripten_async_call(stream_webgpu_tick, nullptr, 0);
+}
+#endif
+
 // Stream
 void bind_start_stream(const std::string &model, const std::string &lang,
                        int nthreads = 16, bool translate = false,
@@ -582,12 +740,21 @@ void bind_start_stream(const std::string &model, const std::string &lang,
                        bool suppress_nst = false) {
   if (g_stream_context == nullptr) {
     struct whisper_context_params cparams = whisper_context_default_params();
+#ifdef SHOUT_USE_WEBGPU
+    cparams.use_gpu = true;
+#else
+    cparams.use_gpu = false;
+#endif
     g_stream_context =
         whisper_init_from_file_with_params(model.c_str(), cparams);
 
     if (g_stream_context != nullptr) {
       g_stream_running = true;
 
+#ifdef SHOUT_USE_WEBGPU
+      stream_webgpu_start(lang, nthreads, translate, max_tokens, audio_ctx,
+                          suppress_nst);
+#else
       if (g_stream_worker.joinable()) {
         g_stream_worker.join();
       }
@@ -596,6 +763,7 @@ void bind_start_stream(const std::string &model, const std::string &lang,
             stream_main(lang, nthreads, translate, max_tokens, audio_ctx,
                         suppress_nst);
           });
+#endif
     }
 
     whisper_free_context_params(&cparams);

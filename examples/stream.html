@@ -15,16 +15,29 @@
 
     <script type="module">
       import { simd } from "./lib/simd.js";
+      import { default as createModuleWebGPU } from "../src/shout/shout.wasm_webgpu.js?v1.0.7";
       import { default as createModuleSimd } from "../src/shout/shout.wasm.js?v1.0.7";
       import { default as createModuleNoSimd } from "../src/shout/shout.wasm_no-simd.js?v1.0.7";
-      import { StreamTranscriber } from "../src/index.js?v3.0.0";
+      import {
+        StreamTranscriber,
+        isWebGPUSupported,
+      } from "../src/index.js?v3.0.0";
 
       (async function () {
-        // feature detect simd support
-        // only if you need to support browsers/devices without simd support
-        const createModule = (await simd())
-          ? createModuleSimd
-          : createModuleNoSimd;
+        // Feature detection: WebGPU (Chrome 126+/Edge 126+) > SIMD > fallback
+        const webGPUSupported = await isWebGPUSupported();
+        const simdSupported = await simd();
+
+        if (webGPUSupported) {
+          console.log("WebGPU supported — using GPU build");
+          var createModule = createModuleWebGPU;
+        } else if (simdSupported) {
+          console.log("SIMD supported — using SIMD build");
+          var createModule = createModuleSimd;
+        } else {
+          console.log("Using fallback build");
+          var createModule = createModuleNoSimd;
+        }
 
         // Preload model
         const path = location.pathname.replace(/\/[^/]+$/, "");

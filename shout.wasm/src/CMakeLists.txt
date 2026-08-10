@@ -27,6 +27,19 @@ if (NO_SIMD)
     set_target_properties(ggml-cpu PROPERTIES COMPILE_FLAGS "")
 endif()
 
+if (GGML_WEBGPU)
+    # Compile directly to the final filename so Emscripten bakes the correct
+    # worker script URL into the JS (pthread workers load the file by name).
+    set_target_properties(${TARGET} PROPERTIES OUTPUT_NAME "shout.wasm_webgpu")
+    # Signal to shout.wasm.cpp that this is a GPU-enabled build.
+    target_compile_definitions(${TARGET} PRIVATE SHOUT_USE_WEBGPU)
+    # Asyncify (added by ggml-webgpu) needs a much larger stack than the
+    # default 4 KB to handle whisper.cpp's deep call chains during inference.
+    # Without this, Asyncify silently overflows into adjacent heap memory and
+    # causes a hang.  64 KB is a safe margin for the full encoder+decoder path.
+    target_link_options(${TARGET} PRIVATE "-sASYNCIFY_STACK_SIZE=65536")
+endif()
+
 set_target_properties(${TARGET} PROPERTIES LINK_FLAGS " \
     --bind \
     -s USE_PTHREADS=1 \

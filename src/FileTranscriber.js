@@ -126,7 +126,11 @@ export class FileTranscriber extends Transcriber {
   async init() {
     await super.init();
 
-    this.Module.init(this.modelInternalFilename, this.dtwType);
+    // Module.init() may return a Promise when the WebGPU build
+    await Promise.resolve(
+      this.Module.init(this.modelInternalFilename, this.dtwType),
+    );
+
     this._onReady();
     this._isReady = true;
   }
@@ -155,7 +159,7 @@ export class FileTranscriber extends Transcriber {
       split_on_word = false,
       suppress_non_speech = false,
       token_timestamps = true,
-    } = {}
+    } = {},
   ) {
     if (!this.isReady) {
       throw new Error("FileTranscriber not initialized.");
@@ -163,13 +167,15 @@ export class FileTranscriber extends Transcriber {
 
     if (threads > this.maxThreads) {
       console.warn(
-        `Number of threads (${threads}) exceeds hardware concurrency (${this.maxThreads}).`
+        `Number of threads (${threads}) exceeds hardware concurrency (${this.maxThreads}).`,
       );
     }
 
     const audioPcm = await this._loadAudio(audio);
 
     return new Promise((resolve) => {
+      this._resolveComplete = resolve;
+
       this.Module.transcribe(
         audioPcm,
         lang,
@@ -178,9 +184,8 @@ export class FileTranscriber extends Transcriber {
         max_len,
         split_on_word,
         suppress_non_speech,
-        token_timestamps
+        token_timestamps,
       );
-      this._resolveComplete = resolve;
     });
   }
 
