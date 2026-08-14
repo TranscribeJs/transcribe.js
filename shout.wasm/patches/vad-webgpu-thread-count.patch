@@ -1,0 +1,20 @@
+diff --git a/src/whisper.cpp b/src/whisper.cpp
+index 2a95bdb1..a806f8be 100644
+--- a/src/whisper.cpp
++++ b/src/whisper.cpp
+@@ -6664,6 +6664,15 @@ static bool whisper_vad(
+ 
+     if (state->vad_context == nullptr) {
+         struct whisper_vad_context_params vad_ctx_params = whisper_vad_default_context_params();
++        // Use the same thread count as the caller requested for whisper_full()
++        // instead of the hardcoded default of 4. This matters on builds that run
++        // whisper_full() on the main thread inside an Asyncify call stack (e.g.
++        // WebGPU): the VAD's ggml CPU graph otherwise spawns its own pthread pool
++        // (independently of wparams.n_threads) via ggml_graph_compute_helper(),
++        // and creating/joining pthreads while suspended under Asyncify can miss
++        // the Atomics.notify that wakes the main thread, hanging the browser tab.
++        // With n_threads == 1, ggml never spawns the extra worker threads.
++        vad_ctx_params.n_threads = std::max(1, params.n_threads);
+         struct whisper_vad_context * vctx = whisper_vad_init_from_file_with_params(params.vad_model_path, vad_ctx_params);
+         if (vctx == nullptr) {
+             WHISPER_LOG_ERROR("%s: failed to initialize VAD context\n", __func__);

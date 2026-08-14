@@ -83,6 +83,23 @@ export type TranscribeResult = {
 
   /** Transcription results split in segements. */
   transcription: TranscribeSegment[];
+
+  /** Speech segments detected by VAD, only present when the `vad` option was used. */
+  vad_segments?: {
+    /** Text time offset. */
+    offsets: {
+      from: number;
+      to: number;
+    };
+
+    /** Offset as timestamp hh:mm:ss,sss */
+    timestamps: {
+      /** hh:mm:ss,sss */
+      from: string;
+      /** hh:mm:ss,sss */
+      to: string;
+    };
+  }[];
 };
 
 export type TranscriberOptions = {
@@ -130,6 +147,13 @@ export type FileTranscriberOptions = TranscriberOptions & {
    * If transcriber should compute word level timestamps using DTW algorithm, specify the type of the model used.
    */
   dtwType?: DtwType;
+
+  /**
+   * Silero VAD model file in ggml format, required to use the `vad` transcribe option.
+   * Will fetch if string, otherwise will use the provided file.
+   * @see {@link https://huggingface.co/ggml-org/whisper-vad}
+   */
+  vadModel?: string | File;
 
   /**
    * Called when init is ready.
@@ -231,6 +255,51 @@ export type FileTranscribeOptions = {
    * @default true
    */
   token_timestamps?: boolean;
+
+  /**
+   * If true, uses VAD (Voice Activity Detection) to only transcribe speech segments.
+   * Requires `vadModel` to be provided in the constructor.
+   * @default false
+   */
+  vad?: boolean;
+
+  /**
+   * VAD speech probability threshold. A probability for a speech segment/frame
+   * above this threshold will be considered as speech.
+   * @default 0.5
+   */
+  vad_threshold?: number;
+
+  /**
+   * Minimum speech duration in milliseconds. Speech segments shorter than this
+   * value will be discarded.
+   * @default 250
+   */
+  vad_min_speech_duration_ms?: number;
+
+  /**
+   * Minimum silence duration in milliseconds to end a speech segment.
+   * @default 100
+   */
+  vad_min_silence_duration_ms?: number;
+
+  /**
+   * Maximum speech duration in seconds before forcing a new segment.
+   * @default Infinity
+   */
+  vad_max_speech_duration_s?: number;
+
+  /**
+   * Padding in milliseconds added before and after each detected speech segment.
+   * @default 30
+   */
+  vad_speech_pad_ms?: number;
+
+  /**
+   * Overlap in seconds when concatenating detected speech segments.
+   * @default 0.1
+   */
+  vad_samples_overlap?: number;
 };
 
 export type StreamStartOptions = {

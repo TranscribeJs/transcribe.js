@@ -28,20 +28,35 @@
         const webGPUSupported = await isWebGPUSupported();
         const simdSupported = await simd();
 
+        const gpuCheckbox = document.querySelector(".use-gpu");
+        const gpuHint = document.querySelector(".gpu-hint");
+        const vadCheckbox = document.querySelector(".use-vad");
+
         if (webGPUSupported) {
-          console.log("WebGPU supported — using GPU build");
-          var createModule = createModuleWebGPU;
-        } else if (simdSupported) {
-          console.log("SIMD supported — using SIMD build");
-          var createModule = createModuleSimd;
+          gpuCheckbox.checked = true;
         } else {
-          console.log("Using fallback build");
-          var createModule = createModuleNoSimd;
+          gpuCheckbox.checked = false;
+          gpuCheckbox.disabled = true;
+          gpuHint.textContent = "(WebGPU is not supported in this browser)";
+        }
+
+        function getCreateModule() {
+          if (gpuCheckbox.checked && webGPUSupported) {
+            console.log("WebGPU supported — using GPU build");
+            return createModuleWebGPU;
+          } else if (simdSupported) {
+            console.log("SIMD supported — using SIMD build");
+            return createModuleSimd;
+          } else {
+            console.log("Using fallback build");
+            return createModuleNoSimd;
+          }
         }
 
         // Preload model
         const path = location.pathname.replace(/\/[^/]+$/, "");
         const modelFile = `${path}/models/ggml-tiny-q5_1.bin`;
+        const vadModelFile = `${path}/models/ggml-silero-v6.2.0.bin`;
 
         preloadModel(modelFile, printConsole).then((loaded) => {
           if (loaded) {
@@ -59,40 +74,74 @@
           consoleOutput.scrollTop = consoleOutput.scrollHeight;
         }
 
-        // New Transcriber
-        const transcriber = new FileTranscriber({
-          createModule,
+        // (Re)create the transcriber whenever the GPU/VAD checkboxes change,
+        // reusing the existing instance otherwise so we don't pay for a
+        // fresh wasm module load on every click.
+        let transcriber = null;
+        let transcriberConfig = null;
 
-          model: modelFile,
+        function getTranscriber() {
+          const config = {
+            useGpu: gpuCheckbox.checked && webGPUSupported,
+            useVad: vadCheckbox.checked,
+          };
 
-          print: printConsole,
-          printErr: printConsole,
+          const changed =
+            !transcriber ||
+            !transcriberConfig ||
+            transcriberConfig.useGpu !== config.useGpu ||
+            transcriberConfig.useVad !== config.useVad;
 
-          onReady: () => {
-            console.log("Ready to transcribe.");
-          },
+          if (changed) {
+            if (transcriber) {
+              transcriber.destroy();
+            }
 
-          onProgress: (progress) => {
-            console.log("Progress", progress);
-          },
+            transcriber = new FileTranscriber({
+              createModule: getCreateModule(),
 
-          onCanceled: () => {
-            console.log("Canceled");
-          },
+              model: modelFile,
+              vadModel: config.useVad ? vadModelFile : undefined,
 
-          onComplete: () => {
-            console.log("Transcription complete.");
-          },
-        });
+              print: printConsole,
+              printErr: printConsole,
+
+              onReady: () => {
+                console.log("Ready to transcribe.");
+              },
+
+              onProgress: (progress) => {
+                console.log("Progress", progress);
+              },
+
+              onCanceled: () => {
+                console.log("Canceled");
+              },
+
+              onComplete: () => {
+                console.log("Transcription complete.");
+              },
+            });
+
+            transcriberConfig = config;
+          }
+
+          return transcriber;
+        }
 
         // transcribe audio file
         async function transcript() {
           try {
+            const transcriber = getTranscriber();
             await transcriber.init();
 
-            const result = await transcriber.transcribe("/examples/jfk.wav", {
-              lang: "en",
-            });
+            const result = await transcriber.transcribe(
+              "/examples/albert.ogg",
+              {
+                lang: "en",
+                vad: vadCheckbox.checked,
+              },
+            );
 
             console.log(result);
 
@@ -119,7 +168,9 @@
         document
           .querySelector(".cancel")
           .addEventListener("click", async () => {
-            transcriber.cancel();
+            if (transcriber) {
+              transcriber.cancel();
+            }
           });
 
         document
@@ -147,6 +198,32 @@
       <audio controls src="/examples/jfk.wav"></audio> <br />
       <h2>Transcribe</h2>
       <p>
+        <label>
+          <input type="checkbox" class="use-gpu" />
+          WebGPU
+        </label>
+        <small class="gpu-hint"></small>
+        <br />
+        <small
+          ><b>WebGPU</b> will accelerate the transcription process by utilizing
+          the GPU for computation.</small
+        >
+      </p>
+      <p>
+        <label>
+          <input type="checkbox" class="use-vad" />
+          Voice Activity Detection (VAD)
+        </label>
+        <br />
+        <small>
+          <b>Voice Activity Detection</b> will help the transcription process
+          focus on speech segments only. This may increase accuracy and can also
+          affect (positive or negative) processing time, depending on the audio
+          content. You also get extra timestamps for the detected speech
+          segments.
+        </small>
+      </p>
+      <p>
         <button class="start" disabled>Start</button>
         <button class="cancel" disabled>Cancel</button>
         <button class="preload-model">Load Model File</button>
@@ -155,6 +232,7 @@
         Click transcribe and wait for the transcription to complete. Check the
         developer console for complete json result.
       </p>
+
       <pre><code class="result" style="border: 1px solid grey;white-space: normal;"><em>Click Start to transcribe test audio file.</em></code></pre>
       <h3>Console Output</h3>
       <pre

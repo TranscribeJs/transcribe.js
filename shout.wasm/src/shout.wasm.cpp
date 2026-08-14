@@ -122,7 +122,8 @@ bool isJson(const std::string &str) {
 }
 
 std::string to_output_json(struct whisper_context *ctx, const int n_segment_0,
-                           const int n_segment_1, bool is_segment = false) {
+                           const int n_segment_1, bool is_segment = false,
+                           bool include_vad_segments = false) {
 
   std::stringstream json;
 
@@ -236,6 +237,19 @@ std::string to_output_json(struct whisper_context *ctx, const int n_segment_0,
   if (is_segment) {
     end_obj(true);
   } else {
+    // Leave a trailing comma when a vad_segments field will follow.
+    end_arr(!include_vad_segments);
+  }
+
+  if (!is_segment && include_vad_segments) {
+    const int n_vad = whisper_full_n_vad_segments(ctx);
+    start_arr("vad_segments");
+    for (int i = 0; i < n_vad; ++i) {
+      start_obj(nullptr);
+      times_o(whisper_full_get_vad_segment_t0(ctx, i),
+              whisper_full_get_vad_segment_t1(ctx, i), true);
+      end_obj(i == (n_vad - 1));
+    }
     end_arr(true);
   }
 
@@ -486,7 +500,8 @@ void run_transcribe_inline(struct whisper_full_params wparams, std::vector<float
   printf("running whisper_full done\n");
 
   const int n_segments = whisper_full_n_segments(g_context.get());
-  std::string result = to_output_json(g_context.get(), 0, n_segments);
+  std::string result =
+      to_output_json(g_context.get(), 0, n_segments, false, wparams.vad);
 
   printf("n_segments = %d\n", n_segments);
 
@@ -513,10 +528,14 @@ void run_transcribe_inline(struct whisper_full_params wparams, std::vector<float
 // short-lived string) so the worker thread's own copy stays alive for as
 // long as wparams does.
 void run_transcribe_threaded(struct whisper_full_params wparams, std::string language,
-                             std::vector<float> pcmf32) {
+                             std::string vad_model_path, std::vector<float> pcmf32) {
   g_worker.start([wparams = std::move(wparams), language = std::move(language),
+                  vad_model_path = std::move(vad_model_path),
                   pcmf32 = std::move(pcmf32)]() mutable {
     wparams.language = language.c_str();
+    if (wparams.vad) {
+      wparams.vad_model_path = vad_model_path.c_str();
+    }
 
     is_running = true;
 
@@ -526,7 +545,8 @@ void run_transcribe_threaded(struct whisper_full_params wparams, std::string lan
 
     // get segements
     const int n_segments = whisper_full_n_segments(g_context.get());
-    std::string result = to_output_json(g_context.get(), 0, n_segments);
+    std::string result =
+        to_output_json(g_context.get(), 0, n_segments, false, wparams.vad);
 
     if (!abort_flag) {
       call_handler("onTranscribed", result);
@@ -543,7 +563,12 @@ void run_transcribe_threaded(struct whisper_full_params wparams, std::string lan
 int bind_transcribe(const emscripten::val &audio, const std::string &lang,
                     int nthreads, bool translate, int max_len,
                     bool split_on_word, bool suppress_nst,
-                    bool token_timestamps) {
+                    bool token_timestamps,
+                    bool vad, const std::string &vad_model_path,
+                    float vad_threshold, int vad_min_speech_duration_ms,
+                    int vad_min_silence_duration_ms,
+                    float vad_max_speech_duration_s, int vad_speech_pad_ms,
+                    float vad_samples_overlap) {
 
   g_worker.join();
 
@@ -578,6 +603,14 @@ int bind_transcribe(const emscripten::val &audio, const std::string &lang,
   wparams.split_on_word = split_on_word;
   wparams.suppress_nst = suppress_nst;
 
+  wparams.vad = vad;
+  wparams.vad_params.threshold = vad_threshold;
+  wparams.vad_params.min_speech_duration_ms = vad_min_speech_duration_ms;
+  wparams.vad_params.min_silence_duration_ms = vad_min_silence_duration_ms;
+  wparams.vad_params.max_speech_duration_s = vad_max_speech_duration_s;
+  wparams.vad_params.speech_pad_ms = vad_speech_pad_ms;
+  wparams.vad_params.samples_overlap = vad_samples_overlap;
+
   // audio data
   std::vector<float> pcmf32;
   copy_audio_to_pcm(audio, pcmf32);
@@ -596,9 +629,15 @@ int bind_transcribe(const emscripten::val &audio, const std::string &lang,
 
   // run the worker
 #ifdef SHOUT_USE_WEBGPU
+  // Synchronous/inline execution: the vad_model_path reference stays valid
+  // for the duration of this call, so it's safe to point wparams at it directly.
+  if (vad) {
+    wparams.vad_model_path = vad_model_path.c_str();
+  }
   run_transcribe_inline(std::move(wparams), std::move(pcmf32));
 #else
-  run_transcribe_threaded(std::move(wparams), std::move(language), std::move(pcmf32));
+  run_transcribe_threaded(std::move(wparams), std::move(language),
+                          std::string(vad_model_path), std::move(pcmf32));
 #endif
 
   return 0;

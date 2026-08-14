@@ -228,41 +228,55 @@ export class Transcriber {
    * @returns {Promise<void>}
    */
   async _loadModel() {
-    let file;
+    this._modelFilename = await this._loadModelFile(
+      this.model,
+      this._modelFilename
+    );
 
-    if (this.model instanceof File) {
-      file = this.model;
-      this._modelFilename = file.name;
-    } else if (typeof this.model === "string") {
-      file = await fetch(this.model);
+    this._isModelFileLoaded = true;
+  }
+
+  /**
+   * Fetch (or read) a model file and write it into the wasm filesystem.
+   *
+   * @protected
+   * @param {string|File} model Model file or URL to fetch.
+   * @param {string} defaultFilename Filename to use in the wasm filesystem when `model` is a URL string.
+   * @returns {Promise<string>} The filename the model was written to in the wasm filesystem.
+   */
+  async _loadModelFile(model, defaultFilename) {
+    let file;
+    let filename;
+
+    if (model instanceof File) {
+      file = model;
+      filename = file.name;
+    } else if (typeof model === "string") {
+      file = await fetch(model);
 
       if (!file.ok) {
         throw new Error(`Failed to fetch model file: ${file.statusText}`);
       }
 
-      this._modelFilename = this.model.split("/").pop();
+      filename = model.split("/").pop();
     } else {
       throw new Error("Invalid model file.");
     }
+
+    filename = filename || defaultFilename;
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = new Uint8Array(arrayBuffer, 0, arrayBuffer.byteLength);
 
     // delete if already exists
     try {
-      this.Module.FS_unlink(this.modelInternalFilename);
+      this.Module.FS_unlink(filename);
     } catch (e) {
       // file doesn't exist, ignore
     }
 
-    this.Module.FS_createDataFile(
-      "/",
-      this.modelInternalFilename,
-      buffer,
-      true,
-      true
-    );
+    this.Module.FS_createDataFile("/", filename, buffer, true, true);
 
-    this._isModelFileLoaded = true;
+    return filename;
   }
 }

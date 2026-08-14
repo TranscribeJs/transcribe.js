@@ -147,11 +147,80 @@ describe("FileTranscriber", () => {
         options.max_len,
         options.split_on_word,
         options.suppress_non_speech,
-        options.token_timestamps
+        options.token_timestamps,
+        false,
+        "",
+        0.5,
+        250,
+        100,
+        Infinity,
+        30,
+        0.1
       );
 
       expect(resolvePromise).toHaveBeenCalledWith(expectedResult);
       expect(onComplete).toHaveBeenCalledWith(expectedResult);
+    });
+
+    it("should throw an error if vad is requested without a loaded vadModel", async () => {
+      // Arrange
+      const transcriber = new FileTranscriber({ createModule, model });
+      await transcriber.init();
+      transcriber._isRuntimeInitialized = true;
+      transcriber._loadAudio = vi.fn().mockResolvedValue(new Float32Array());
+
+      // Act & Assert
+      await expect(
+        transcriber.transcribe(new Float32Array(), { vad: true })
+      ).rejects.toThrow(
+        "The vad option requires a vadModel to be provided in the FileTranscriber constructor."
+      );
+    });
+
+    it("should pass vad options and the vad model filename to Module.transcribe", async () => {
+      // Arrange
+      const vadModel = new File([""], "vadModelFilename.bin");
+      vadModel.arrayBuffer = vi.fn(() => Promise.resolve(new ArrayBuffer(8)));
+
+      const transcriber = new FileTranscriber({ createModule, model, vadModel });
+      await transcriber.init();
+      transcriber._isRuntimeInitialized = true;
+
+      const audio = new Float32Array([1, 2, 3]);
+      transcriber._loadAudio = vi.fn().mockResolvedValue(audio);
+
+      // Act
+      transcriber.transcribe(audio, {
+        vad: true,
+        vad_threshold: 0.7,
+        vad_min_speech_duration_ms: 300,
+        vad_min_silence_duration_ms: 150,
+        vad_max_speech_duration_s: 30,
+        vad_speech_pad_ms: 50,
+        vad_samples_overlap: 0.2,
+      });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Assert
+      expect(transcriber.isVadModelFileLoaded).toBe(true);
+      expect(transcriber.Module.transcribe).toHaveBeenCalledWith(
+        audio,
+        "auto",
+        transcriber.maxThreads,
+        false,
+        0,
+        false,
+        false,
+        true,
+        true,
+        transcriber.vadModelInternalFilename,
+        0.7,
+        300,
+        150,
+        30,
+        50,
+        0.2
+      );
     });
   });
 

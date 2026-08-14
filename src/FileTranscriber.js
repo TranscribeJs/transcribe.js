@@ -15,6 +15,30 @@ export class FileTranscriber extends Transcriber {
   _dtwType = "";
 
   /**
+   * VAD model file.
+   *
+   * @private
+   * @type {string|File|null}
+   */
+  _vadModel = null;
+
+  /**
+   * VAD model filename in wasm filesystem.
+   *
+   * @private
+   * @type {string}
+   */
+  _vadModelFilename = "vad-model.bin";
+
+  /**
+   * Is VAD model file loaded.
+   *
+   * @private
+   * @type {boolean}
+   */
+  _isVadModelFileLoaded = false;
+
+  /**
    * Callback when init is ready.
    *
    * @private
@@ -64,6 +88,7 @@ export class FileTranscriber extends Transcriber {
     super(options);
 
     this._dtwType = options.dtwType ?? "";
+    this._vadModel = options.vadModel ?? null;
     this._onReady = options.onReady ?? (() => {});
 
     this.onComplete = options.onComplete;
@@ -82,6 +107,33 @@ export class FileTranscriber extends Transcriber {
    */
   get dtwType() {
     return this._dtwType;
+  }
+
+  /**
+   * VAD model file.
+   *
+   * @type {string|File|null}
+   */
+  get vadModel() {
+    return this._vadModel;
+  }
+
+  /**
+   * Filename of the VAD model in wasm filesystem.
+   *
+   * @type {string}
+   */
+  get vadModelInternalFilename() {
+    return this._vadModelFilename;
+  }
+
+  /**
+   * Is VAD model file loaded.
+   *
+   * @type {boolean}
+   */
+  get isVadModelFileLoaded() {
+    return this._isVadModelFileLoaded;
   }
 
   /**
@@ -126,6 +178,10 @@ export class FileTranscriber extends Transcriber {
   async init() {
     await super.init();
 
+    if (this.vadModel && !this.isVadModelFileLoaded) {
+      await this._loadVadModel();
+    }
+
     // Module.init() may return a Promise when the WebGPU build
     await Promise.resolve(
       this.Module.init(this.modelInternalFilename, this.dtwType),
@@ -133,6 +189,40 @@ export class FileTranscriber extends Transcriber {
 
     this._onReady();
     this._isReady = true;
+  }
+
+  /**
+   * Load VAD model file into wasm filesystem.
+   *
+   * @private
+   * @returns {Promise<void>}
+   */
+  async _loadVadModel() {
+    this._vadModelFilename = await this._loadModelFile(
+      this.vadModel,
+      this._vadModelFilename,
+    );
+
+    this._isVadModelFileLoaded = true;
+  }
+
+  /**
+   * Unload model files and free wasm memory.
+   *
+   * @protected
+   */
+  _freeWasmModule() {
+    super._freeWasmModule();
+
+    if (this.isVadModelFileLoaded) {
+      try {
+        this.Module.FS_unlink(this.vadModelInternalFilename);
+      } catch (e) {
+        // file doesn't exist, ignore
+      }
+
+      this._isVadModelFileLoaded = false;
+    }
   }
 
   /**
@@ -147,6 +237,13 @@ export class FileTranscriber extends Transcriber {
    * @param {boolean} [options.split_on_word=false] Split the text on word.
    * @param {boolean} [options.suppress_non_speech=false] Suppress non-speech.
    * @param {boolean} [options.token_timestamps=true] Calculate token timestamps.
+   * @param {boolean} [options.vad=false] Use VAD to only transcribe speech segments. Requires `vadModel` to be set in the constructor.
+   * @param {number} [options.vad_threshold=0.5] VAD speech probability threshold.
+   * @param {number} [options.vad_min_speech_duration_ms=250] Minimum speech segment duration in ms.
+   * @param {number} [options.vad_min_silence_duration_ms=100] Minimum silence duration in ms to end a speech segment.
+   * @param {number} [options.vad_max_speech_duration_s=Infinity] Maximum speech segment duration in seconds.
+   * @param {number} [options.vad_speech_pad_ms=30] Padding added before/after detected speech segments in ms.
+   * @param {number} [options.vad_samples_overlap=0.1] Overlap in seconds between speech segments.
    * @returns {Promise<import("./types.d.ts").TranscribeResult>}
    */
   async transcribe(
@@ -159,6 +256,13 @@ export class FileTranscriber extends Transcriber {
       split_on_word = false,
       suppress_non_speech = false,
       token_timestamps = true,
+      vad = false,
+      vad_threshold = 0.5,
+      vad_min_speech_duration_ms = 250,
+      vad_min_silence_duration_ms = 100,
+      vad_max_speech_duration_s = Infinity,
+      vad_speech_pad_ms = 30,
+      vad_samples_overlap = 0.1,
     } = {},
   ) {
     if (!this.isReady) {
@@ -168,6 +272,12 @@ export class FileTranscriber extends Transcriber {
     if (threads > this.maxThreads) {
       console.warn(
         `Number of threads (${threads}) exceeds hardware concurrency (${this.maxThreads}).`,
+      );
+    }
+
+    if (vad && !this.isVadModelFileLoaded) {
+      throw new Error(
+        "The vad option requires a vadModel to be provided in the FileTranscriber constructor.",
       );
     }
 
@@ -185,6 +295,14 @@ export class FileTranscriber extends Transcriber {
         split_on_word,
         suppress_non_speech,
         token_timestamps,
+        vad,
+        vad ? this.vadModelInternalFilename : "",
+        vad_threshold,
+        vad_min_speech_duration_ms,
+        vad_min_silence_duration_ms,
+        vad_max_speech_duration_s,
+        vad_speech_pad_ms,
+        vad_samples_overlap,
       );
     });
   }

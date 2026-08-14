@@ -39,6 +39,8 @@ npm run wasm:copy-webgpu
 
 `whisper.cpp` is a git submodule at `shout.wasm/whisper.cpp`; update it with `cd shout.wasm/whisper.cpp && git pull origin master`. To expose new whisper.cpp functionality to JS, edit `shout.wasm/src/shout.wasm.cpp` and rebuild.
 
+**After updating the submodule, run `npm run wasm:patch-whisper`** (also run automatically by `npm run build`) to reapply local patches from `shout.wasm/patches/`. Currently this carries one fix: whisper.cpp's internal VAD always spawns its own 4-thread pthread pool regardless of `whisper_full_params.n_threads`. On the WebGPU build, `whisper_full()` runs inline on the main thread inside an Asyncify call stack, and spawning pthreads there hangs the browser tab — the patch makes VAD's thread count follow the caller's `n_threads` instead.
+
 ### Full release build
 
 `npm run build` runs, in order: fft.js export patch → generate-types → build+copy all three wasm variants → `pack:transcriber` / `pack:shout` (assemble the publishable `packages/*` directories from `src/`).

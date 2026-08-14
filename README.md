@@ -188,6 +188,14 @@ cd shout.wasm/whisper.cpp
 git pull origin master
 ```
 
+> **After updating the submodule**, reapply the local whisper.cpp patch(es) in `shout.wasm/patches/`:
+>
+> ```bash
+> npm run wasm:patch-whisper
+> ```
+>
+> This is also run automatically as part of `npm run build`. It fixes a real freeze: whisper.cpp's internal VAD (`whisper_vad()`) always spawns its own 4-thread pthread pool, ignoring `whisper_full_params.n_threads`. In the WebGPU wasm build, `whisper_full()` runs inline on the main thread inside an Asyncify call stack, and spawning pthreads there hangs the browser tab. The patch makes the VAD context follow the caller's thread count instead of the hardcoded default. If a `git pull` conflicts with the patch, re-derive it from `shout.wasm/patches/vad-webgpu-thread-count.patch` and update the file.
+
 The wasm files are build from `shout.wasm/src/shout.wasm.cpp`. If you want to add new functions from whisper.cpp to the wasm build this is the file to add them.
 
 > I'm pretty sure that this will not compile on every machine/architecture, but I'm no expert in C++. If you know how to optimize the build process please let me know or create a pull request. Maybe this should be dockerized.?
