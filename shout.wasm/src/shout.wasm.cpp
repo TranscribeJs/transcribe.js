@@ -3,6 +3,9 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
+#include <atomic>
+#include <memory>
+#include <mutex>
 #include <sstream>
 #include <thread>
 #include <variant>
@@ -10,17 +13,49 @@
 
 using CallHandlerArg = std::variant<std::string, int, bool>;
 
+// Sole owner of a whisper_context; whisper_free() runs automatically when the
+// owning WhisperContextPtr is reset or destroyed.
+struct WhisperContextDeleter {
+  void operator()(whisper_context *ctx) const { whisper_free(ctx); }
+};
+using WhisperContextPtr = std::unique_ptr<whisper_context, WhisperContextDeleter>;
+
+// Wraps a std::thread so replacing or destroying it always joins whatever
+// thread it currently holds, instead of relying on every call site to
+// remember to join-before-reassign.
+class JoiningThread {
+public:
+  JoiningThread() = default;
+  JoiningThread(const JoiningThread &) = delete;
+  JoiningThread &operator=(const JoiningThread &) = delete;
+  ~JoiningThread() { join(); }
+
+  template <typename Fn> void start(Fn &&fn) {
+    join();
+    thread_ = std::thread(std::forward<Fn>(fn));
+  }
+
+  void join() {
+    if (thread_.joinable()) {
+      thread_.join();
+    }
+  }
+
+private:
+  std::thread thread_;
+};
+
 // thread stuff
-std::thread g_worker;
+JoiningThread g_worker;
 struct whisper_context {};
-struct whisper_context *g_context = nullptr;
+WhisperContextPtr g_context;
 
 std::atomic<bool> abort_flag(false);
 std::atomic<bool> is_running(false);
 
 // stream stuff
-std::thread g_stream_worker;
-struct whisper_context *g_stream_context = nullptr;
+JoiningThread g_stream_worker;
+WhisperContextPtr g_stream_context;
 std::mutex g_mutex;
 std::atomic<bool> g_stream_running(false);
 std::vector<float> g_pcmf32;
@@ -318,56 +353,58 @@ bool abort_callback(void *user_data) {
 /**
  * Emscripten bindings
  */
-void bind_init(const std::string &path_model, const std::string &dtw) {
-  if (g_worker.joinable()) {
-    g_worker.join();
+void apply_dtw_preset(struct whisper_context_params &cparams, const std::string &dtw) {
+  if (dtw != "tiny" && dtw != "tiny.en" && dtw != "base" && dtw != "base.en" &&
+      dtw != "small" && dtw != "small.en") {
+    return;
   }
 
-  if (g_context == nullptr) {
-    struct whisper_context_params cparams = whisper_context_default_params();
+  cparams.dtw_token_timestamps = true;
+  cparams.dtw_aheads_preset = WHISPER_AHEADS_NONE;
+
+  if (dtw == "tiny")
+    cparams.dtw_aheads_preset = WHISPER_AHEADS_TINY;
+  if (dtw == "tiny.en")
+    cparams.dtw_aheads_preset = WHISPER_AHEADS_TINY_EN;
+  if (dtw == "base")
+    cparams.dtw_aheads_preset = WHISPER_AHEADS_BASE;
+  if (dtw == "base.en")
+    cparams.dtw_aheads_preset = WHISPER_AHEADS_BASE_EN;
+  if (dtw == "small")
+    cparams.dtw_aheads_preset = WHISPER_AHEADS_SMALL;
+  if (dtw == "small.en")
+    cparams.dtw_aheads_preset = WHISPER_AHEADS_SMALL_EN;
+
+  if (cparams.dtw_aheads_preset == WHISPER_AHEADS_NONE) {
+    fprintf(stderr, "error: unknown DTW preset '%s'\n", dtw.c_str());
+  }
+
+  printf("Using DTW preset: %s\n", dtw.c_str());
+}
+
+void bind_init(const std::string &path_model, const std::string &dtw) {
+  g_worker.join();
+
+  if (g_context) {
+    return;
+  }
+
+  struct whisper_context_params cparams = whisper_context_default_params();
 #ifdef SHOUT_USE_WEBGPU
-    cparams.use_gpu = true;
+  cparams.use_gpu = true;
 #else
-    cparams.use_gpu = false;
+  cparams.use_gpu = false;
 #endif
 
-    if (dtw == "tiny" || dtw == "tiny.en" || dtw == "base" ||
-        dtw == "base.en" || dtw == "small" || dtw == "small.en") {
-      cparams.dtw_token_timestamps = true;
-      cparams.dtw_aheads_preset = WHISPER_AHEADS_NONE;
+  apply_dtw_preset(cparams, dtw);
 
-      if (dtw == "tiny")
-        cparams.dtw_aheads_preset = WHISPER_AHEADS_TINY;
-      if (dtw == "tiny.en")
-        cparams.dtw_aheads_preset = WHISPER_AHEADS_TINY_EN;
-      if (dtw == "base")
-        cparams.dtw_aheads_preset = WHISPER_AHEADS_BASE;
-      if (dtw == "base.en")
-        cparams.dtw_aheads_preset = WHISPER_AHEADS_BASE_EN;
-      if (dtw == "small")
-        cparams.dtw_aheads_preset = WHISPER_AHEADS_SMALL;
-      if (dtw == "small.en")
-        cparams.dtw_aheads_preset = WHISPER_AHEADS_SMALL_EN;
-
-      if (cparams.dtw_aheads_preset == WHISPER_AHEADS_NONE) {
-        fprintf(stderr, "error: unknown DTW preset '%s'\n", dtw.c_str());
-      }
-
-      printf("Using DTW preset: %s\n", dtw.c_str());
-    }
-
-    g_context = whisper_init_from_file_with_params(path_model.c_str(), cparams);
-    whisper_free_context_params(&cparams);
-  }
+  g_context.reset(whisper_init_from_file_with_params(path_model.c_str(), cparams));
+  whisper_free_context_params(&cparams);
 }
 
 void bind_free() {
-  if (g_worker.joinable()) {
-    g_worker.join();
-  }
-
-  whisper_free(g_context);
-  g_context = nullptr;
+  g_worker.join();
+  g_context.reset();
 }
 
 // return is_running state for handle in JS code
@@ -377,31 +414,27 @@ int bind_cancel() {
   return is_running;
 }
 
-int bind_transcribe(const emscripten::val &audio, const std::string &lang,
-                    int nthreads, bool translate, int max_len,
-                    bool split_on_word, bool suppress_nst,
-                    bool token_timestamps) {
+void copy_audio_to_pcm(const emscripten::val &audio, std::vector<float> &dest) {
+  const int n = audio["length"].as<int>();
 
-  if (g_worker.joinable()) {
-    g_worker.join();
-  }
+  emscripten::val heap = emscripten::val::module_property("HEAPU8");
+  emscripten::val memory = heap["buffer"];
 
-  if (g_context == nullptr) {
-    return -1;
-  }
+  dest.resize(n);
 
-  // reset abort flag
-  abort_flag = false;
-  is_running = false;
+  emscripten::val memoryView = audio["constructor"].new_(
+      memory, reinterpret_cast<uintptr_t>(dest.data()), n);
+  memoryView.call<void>("set", audio);
+}
 
-  // whisper parameter
-  struct whisper_full_params wparams = whisper_full_default_params(
-      whisper_sampling_strategy::WHISPER_SAMPLING_GREEDY);
-
-  // set language to auto if not supported
+// Resolves the requested language against the model's capabilities, mutating
+// the relevant whisper_full_params fields, and returns the language actually
+// selected (kept alive by the caller for the lifetime of wparams.language).
+std::string resolve_transcribe_language(whisper_context *ctx, const std::string &lang,
+                                        bool translate, struct whisper_full_params &wparams) {
   std::string language;
 
-  if (!whisper_is_multilingual(g_context)) {
+  if (!whisper_is_multilingual(ctx)) {
     printf("Model does not support multiple languages\n");
     language = "en";
     wparams.translate = false;
@@ -417,6 +450,118 @@ int bind_transcribe(const emscripten::val &audio, const std::string &lang,
     printf("Language: %s\n", language.c_str());
   }
 
+  return language;
+}
+
+void log_transcribe_start(const struct whisper_full_params &wparams, size_t n_samples) {
+  printf("system_info: n_threads = %d / %d | %s\n", wparams.n_threads,
+         std::thread::hardware_concurrency(), whisper_print_system_info());
+
+  printf("bind_transcribe: processing %d samples, %.1f sec, %d threads, %d "
+         "processors, lang = %s, task = %s, max_len=%i, split_on_word=%d, "
+         "suppress_nst=%d ...\n",
+         int(n_samples), float(n_samples) / WHISPER_SAMPLE_RATE,
+         wparams.n_threads, 1, wparams.language,
+         wparams.translate ? "translate" : "transcribe", wparams.max_len,
+         wparams.split_on_word, wparams.suppress_nst);
+
+  printf("\n");
+}
+
+#ifdef SHOUT_USE_WEBGPU
+// WebGPU JS objects live on the thread that created the device and cannot be
+// accessed from a pthread. Run whisper_full directly here (no new thread).
+// ASYNCIFY suspends the call stack during GPU waits so the browser stays
+// responsive. bind_cancel() can still be called during those suspensions.
+void run_transcribe_inline(struct whisper_full_params wparams, std::vector<float> pcmf32) {
+  // Force single-threaded CPU ops: spawning pthreads from inside an Asyncify
+  // context can cause missed Atomics.notify signals on the main WASM thread.
+  // The GPU backend handles the heavy compute, so a single CPU thread is fine.
+  wparams.n_threads = 1;
+
+  is_running = true;
+
+  printf("running whisper_full ...\n");
+  whisper_full(g_context.get(), wparams, pcmf32.data(), pcmf32.size());
+  printf("running whisper_full done\n");
+
+  const int n_segments = whisper_full_n_segments(g_context.get());
+  std::string result = to_output_json(g_context.get(), 0, n_segments);
+
+  printf("n_segments = %d\n", n_segments);
+
+  for (int i = 0; i < n_segments; ++i) {
+    printf("  segment %d: [%lld -> %lld] '%s'\n", i,
+           (long long) whisper_full_get_segment_t0(g_context.get(), i),
+           (long long) whisper_full_get_segment_t1(g_context.get(), i),
+           whisper_full_get_segment_text(g_context.get(), i));
+  }
+
+  if (!abort_flag) {
+    printf("call onTranscribed (%zu bytes)\n", result.size());
+    call_handler("onTranscribed", result);
+  } else {
+    printf("call onCanceled\n");
+    call_handler("onCanceled");
+  }
+
+  is_running = false;
+}
+#else
+// language is threaded through separately (rather than relying on
+// wparams.language, which was only ever a pointer into the caller's
+// short-lived string) so the worker thread's own copy stays alive for as
+// long as wparams does.
+void run_transcribe_threaded(struct whisper_full_params wparams, std::string language,
+                             std::vector<float> pcmf32) {
+  g_worker.start([wparams = std::move(wparams), language = std::move(language),
+                  pcmf32 = std::move(pcmf32)]() mutable {
+    wparams.language = language.c_str();
+
+    is_running = true;
+
+    printf("running whisper_full ...\n");
+    whisper_full(g_context.get(), wparams, pcmf32.data(), pcmf32.size());
+    printf("running whisper_full done\n");
+
+    // get segements
+    const int n_segments = whisper_full_n_segments(g_context.get());
+    std::string result = to_output_json(g_context.get(), 0, n_segments);
+
+    if (!abort_flag) {
+      call_handler("onTranscribed", result);
+    } else {
+      printf("call onCanceled in thread \n");
+      call_handler("onCanceled");
+    }
+
+    is_running = false;
+  });
+}
+#endif
+
+int bind_transcribe(const emscripten::val &audio, const std::string &lang,
+                    int nthreads, bool translate, int max_len,
+                    bool split_on_word, bool suppress_nst,
+                    bool token_timestamps) {
+
+  g_worker.join();
+
+  if (!g_context) {
+    return -1;
+  }
+
+  // reset abort flag
+  abort_flag = false;
+  is_running = false;
+
+  // whisper parameter
+  struct whisper_full_params wparams = whisper_full_default_params(
+      whisper_sampling_strategy::WHISPER_SAMPLING_GREEDY);
+
+  // set language to auto if not supported
+  std::string language =
+      resolve_transcribe_language(g_context.get(), lang, translate, wparams);
   wparams.language = language.c_str();
 
   wparams.print_realtime = false;
@@ -435,16 +580,7 @@ int bind_transcribe(const emscripten::val &audio, const std::string &lang,
 
   // audio data
   std::vector<float> pcmf32;
-  const int n = audio["length"].as<int>();
-
-  emscripten::val heap = emscripten::val::module_property("HEAPU8");
-  emscripten::val memory = heap["buffer"];
-
-  pcmf32.resize(n);
-
-  emscripten::val memoryView = audio["constructor"].new_(
-      memory, reinterpret_cast<uintptr_t>(pcmf32.data()), n);
-  memoryView.call<void>("set", audio);
+  copy_audio_to_pcm(audio, pcmf32);
 
   // callbacks
   wparams.progress_callback = progress_callback;
@@ -456,86 +592,13 @@ int bind_transcribe(const emscripten::val &audio, const std::string &lang,
   wparams.abort_callback = abort_callback;
   wparams.abort_callback_user_data = &abort_flag;
 
-  // print system information
-  {
-    printf("system_info: n_threads = %d / %d | %s\n", wparams.n_threads,
-           std::thread::hardware_concurrency(), whisper_print_system_info());
-
-    printf("%s: processing %d samples, %.1f sec, %d threads, %d processors, "
-           "lang = %s, task = %s, max_len=%i, split_on_word=%d, "
-           "suppress_nst=%d ...\n",
-           __func__, int(pcmf32.size()),
-           float(pcmf32.size()) / WHISPER_SAMPLE_RATE, wparams.n_threads, 1,
-           wparams.language, wparams.translate ? "translate" : "transcribe",
-           wparams.max_len, wparams.split_on_word, wparams.suppress_nst);
-
-    printf("\n");
-  }
+  log_transcribe_start(wparams, pcmf32.size());
 
   // run the worker
 #ifdef SHOUT_USE_WEBGPU
-  // WebGPU JS objects live on the thread that created the device and cannot be
-  // accessed from a pthread. Run whisper_full directly here (no new thread).
-  // ASYNCIFY suspends the call stack during GPU waits so the browser stays
-  // responsive. bind_cancel() can still be called during those suspensions.
-  {
-    // Force single-threaded CPU ops: spawning pthreads from inside an Asyncify
-    // context can cause missed Atomics.notify signals on the main WASM thread.
-    // The GPU backend handles the heavy compute, so a single CPU thread is fine.
-    wparams.n_threads = 1;
-
-    is_running = true;
-
-    printf("running whisper_full ...\n");
-    whisper_full(g_context, wparams, pcmf32.data(), pcmf32.size());
-    printf("running whisper_full done\n");
-
-    const int n_segments = whisper_full_n_segments(g_context);
-    std::string result = to_output_json(g_context, 0, n_segments);
-
-    printf("n_segments = %d\n", n_segments);
-
-    for (int i = 0; i < n_segments; ++i) {
-      printf("  segment %d: [%lld -> %lld] '%s'\n", i,
-             (long long) whisper_full_get_segment_t0(g_context, i),
-             (long long) whisper_full_get_segment_t1(g_context, i),
-             whisper_full_get_segment_text(g_context, i));
-    }
-
-    if (!abort_flag) {
-      printf("call onTranscribed (%zu bytes)\n", result.size());
-      call_handler("onTranscribed", result);
-    } else {
-      printf("call onCanceled\n");
-      call_handler("onCanceled");
-    }
-
-    is_running = false;
-  }
+  run_transcribe_inline(std::move(wparams), std::move(pcmf32));
 #else
-  {
-    g_worker = std::thread(
-        [wparams = std::move(wparams), pcmf32 = std::move(pcmf32)]() {
-          is_running = true;
-
-          printf("running whisper_full ...\n");
-          whisper_full(g_context, wparams, pcmf32.data(), pcmf32.size());
-          printf("running whisper_full done\n");
-
-          // get segements
-          const int n_segments = whisper_full_n_segments(g_context);
-          std::string result = to_output_json(g_context, 0, n_segments);
-
-          if (!abort_flag) {
-            call_handler("onTranscribed", result);
-          } else {
-            printf("call onCanceled in thread \n");
-            call_handler("onCanceled");
-          }
-
-          is_running = false;
-        });
-  }
+  run_transcribe_threaded(std::move(wparams), std::move(language), std::move(pcmf32));
 #endif
 
   return 0;
@@ -599,8 +662,8 @@ void stream_main(const std::string &lang, int nthreads, bool translate,
 
       stream_set_status("processing");
 
-      int ret =
-          whisper_full(g_stream_context, wparams, pcmf32.data(), pcmf32.size());
+      int ret = whisper_full(g_stream_context.get(), wparams, pcmf32.data(),
+                             pcmf32.size());
       if (ret != 0) {
         printf("whisper_full() failed: %d\n", ret);
         break;
@@ -616,9 +679,9 @@ void stream_main(const std::string &lang, int nthreads, bool translate,
       std::string result_json;
 
       {
-        const int n_segments = whisper_full_n_segments(g_stream_context);
+        const int n_segments = whisper_full_n_segments(g_stream_context.get());
         if (n_segments > 0) {
-          result_json = to_output_json(g_stream_context, 0, n_segments, true);
+          result_json = to_output_json(g_stream_context.get(), 0, n_segments, true);
         }
       }
 
@@ -629,8 +692,7 @@ void stream_main(const std::string &lang, int nthreads, bool translate,
     }
   }
 
-  whisper_free(g_stream_context);
-  g_stream_context = nullptr;
+  g_stream_context.reset();
 
   call_handler("onStreamStatus", "stopped");
 }
@@ -650,8 +712,7 @@ void stream_webgpu_tick(void *arg) {
   (void)arg;
 
   if (!g_stream_running) {
-    whisper_free(g_stream_context);
-    g_stream_context = nullptr;
+    g_stream_context.reset();
     call_handler("onStreamStatus", "stopped");
     return;
   }
@@ -677,15 +738,15 @@ void stream_webgpu_tick(void *arg) {
 
   stream_set_status("processing");
 
-  int ret = whisper_full(g_stream_context, g_stream_wparams, pcmf32.data(),
+  int ret = whisper_full(g_stream_context.get(), g_stream_wparams, pcmf32.data(),
                          pcmf32.size());
   if (ret != 0) {
     printf("whisper_full() failed: %d\n", ret);
   } else {
-    const int n_segments = whisper_full_n_segments(g_stream_context);
+    const int n_segments = whisper_full_n_segments(g_stream_context.get());
     if (n_segments > 0) {
       const std::string result_json =
-          to_output_json(g_stream_context, 0, n_segments, true);
+          to_output_json(g_stream_context.get(), 0, n_segments, true);
       call_handler("onStreamTranscription", result_json);
     }
   }
@@ -738,36 +799,34 @@ void bind_start_stream(const std::string &model, const std::string &lang,
                        int nthreads = 16, bool translate = false,
                        int max_tokens = 32, int audio_ctx = 512,
                        bool suppress_nst = false) {
-  if (g_stream_context == nullptr) {
-    struct whisper_context_params cparams = whisper_context_default_params();
-#ifdef SHOUT_USE_WEBGPU
-    cparams.use_gpu = true;
-#else
-    cparams.use_gpu = false;
-#endif
-    g_stream_context =
-        whisper_init_from_file_with_params(model.c_str(), cparams);
-
-    if (g_stream_context != nullptr) {
-      g_stream_running = true;
-
-#ifdef SHOUT_USE_WEBGPU
-      stream_webgpu_start(lang, nthreads, translate, max_tokens, audio_ctx,
-                          suppress_nst);
-#else
-      if (g_stream_worker.joinable()) {
-        g_stream_worker.join();
-      }
-      g_stream_worker = std::thread(
-          [lang, nthreads, translate, max_tokens, audio_ctx, suppress_nst]() {
-            stream_main(lang, nthreads, translate, max_tokens, audio_ctx,
-                        suppress_nst);
-          });
-#endif
-    }
-
-    whisper_free_context_params(&cparams);
+  if (g_stream_context) {
+    return;
   }
+
+  struct whisper_context_params cparams = whisper_context_default_params();
+#ifdef SHOUT_USE_WEBGPU
+  cparams.use_gpu = true;
+#else
+  cparams.use_gpu = false;
+#endif
+  g_stream_context.reset(whisper_init_from_file_with_params(model.c_str(), cparams));
+
+  if (g_stream_context) {
+    g_stream_running = true;
+
+#ifdef SHOUT_USE_WEBGPU
+    stream_webgpu_start(lang, nthreads, translate, max_tokens, audio_ctx,
+                        suppress_nst);
+#else
+    g_stream_worker.start(
+        [lang, nthreads, translate, max_tokens, audio_ctx, suppress_nst]() {
+          stream_main(lang, nthreads, translate, max_tokens, audio_ctx,
+                      suppress_nst);
+        });
+#endif
+  }
+
+  whisper_free_context_params(&cparams);
 }
 
 void bind_stop_stream() {
@@ -780,16 +839,7 @@ void bind_stop_stream() {
 
 void bind_set_stream_audio(const emscripten::val &audio) {
   std::lock_guard<std::mutex> lock(g_mutex);
-  const int n = audio["length"].as<int>();
-
-  emscripten::val heap = emscripten::val::module_property("HEAPU8");
-  emscripten::val memory = heap["buffer"];
-
-  g_pcmf32.resize(n);
-
-  emscripten::val memoryView = audio["constructor"].new_(
-      memory, reinterpret_cast<uintptr_t>(g_pcmf32.data()), n);
-  memoryView.call<void>("set", audio);
+  copy_audio_to_pcm(audio, g_pcmf32);
 }
 
 EMSCRIPTEN_BINDINGS(whisper) {
